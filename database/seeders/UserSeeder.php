@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $manager = User::updateOrCreate(
+/*         $manager = User::updateOrCreate(
             [
                 'email' => 'bernabe@cantun.com',
             ],
@@ -33,8 +33,8 @@ class UserSeeder extends Seeder
                 'name' => 'Gerente Sucursal',
                 'password' => Hash::make('C4ntun26'),
             ]
-        );
-        $seller = User::updateOrCreate(
+        ); */
+        /* $seller = User::updateOrCreate(
             [
                 'email' => 'marcos@cantun.com',
             ],
@@ -42,18 +42,18 @@ class UserSeeder extends Seeder
                 'name' => 'Vendedor',
                 'password' => Hash::make('C4ntun26'),
             ]
-        );
+        );  */
 
         // Obtener roles
         $adminRole = Role::where('slug', 'administrator')->firstOrFail();
-        $managerRole = Role::where('slug', 'manager')->firstOrFail();
-        $sellerRole = Role::where('slug', 'seller')->firstOrFail();
+        //$managerRole = Role::where('slug', 'manager')->firstOrFail();
+        //$sellerRole = Role::where('slug', 'seller')->firstOrFail();
         // $mechanicRole = Role::where('slug', 'mechanic')->firstOrFail();
 
         // Asignar roles
         $admin->roles()->sync([$adminRole->id]);
-        $manager->roles()->sync([$managerRole->id]);
-        $seller->roles()->sync([$sellerRole->id]);
+        //$manager->roles()->sync([$managerRole->id]);
+        //$seller->roles()->sync([$sellerRole->id]);
         // $mechanic->roles()->sync([$mechanicRole->id]);
 
         // Obtener sucursales
@@ -70,17 +70,17 @@ class UserSeeder extends Seeder
             ],
         ]);
 
-        $manager->branches()->sync([
+/*         $manager->branches()->sync([
             $centerBranch->id => [
                 'is_primary' => true,
             ],
-        ]);
+        ]); */
 
-        $seller->branches()->sync([
+        /* $seller->branches()->sync([
             $centerBranch->id => [
                 'is_primary' => true,
             ],
-        ]);
+        ]); */
 
     }
 }
