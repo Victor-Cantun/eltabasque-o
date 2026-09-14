@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard');
     Route::get('dashboard/data', [DashboardController::class, 'data'])
         ->name('dashboard.data');
-    Route::get('/dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
+    Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
         ->name('dashboard.income-trend');
     // Ventas
     Route::middleware(['permission:sales.view'])->group(function () {

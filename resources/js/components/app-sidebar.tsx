@@ -39,7 +39,7 @@ export function AppSidebar() {
         
     const mainNavItems: NavItem[] = [
     ...(can(userPermissions, 'sales.view')
-        ? [{title: 'Dashboard',href: dashboard(),icon: LayoutGrid,}]
+        ? [{title: 'Dashboard',href: '/dashboard',icon: LayoutGrid,}]
         : []),
     ...(can(userPermissions, 'sales.view')
         ? [{ title: 'Ventas (POS)', href: '/sales', icon: ShoppingCart }]
