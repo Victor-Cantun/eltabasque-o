@@ -18,10 +18,13 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])
+        ->middleware('permission:dashboard.view')
         ->name('dashboard');
     Route::get('dashboard/data', [DashboardController::class, 'data'])
+        ->middleware('permission:dashboard.view')
         ->name('dashboard.data');
     Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
+        ->middleware('permission:dashboard.view')
         ->name('dashboard.income-trend');
     // Ventas
     Route::middleware(['permission:sales.view'])->group(function () {
@@ -40,7 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['permission:sales.cancel'])
         ->name('sales.cancel');
     // Inventario
-    Route::middleware(['auth', 'permission:inventory.view'])->group(function () {
+    Route::middleware('permission:inventory.view')->group(function () {
         Route::get('inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
         Route::get('inventory/{inventory}/edit', [InventoryController::class, 'edit'])

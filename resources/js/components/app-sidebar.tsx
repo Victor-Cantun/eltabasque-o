@@ -13,7 +13,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+//import { dashboard } from '@/routes';
 import { dashboard } from '@/routes';
+import sales from '@/routes/sales';
+import inventory from '@/routes/inventory';
 import branches from '@/routes/branches';
 import mechanics from '@/routes/mechanics';
 import products from '@/routes/products';
@@ -22,6 +25,9 @@ import roles from '@/routes/roles';
 import permissionsRoutes from '@/routes/permissions';
 import type { NavItem } from '@/types';
 
+const dashboardUrl = dashboard()
+const salesUrl = sales.index();
+const inventoryUrl = inventory.index();
 const branchesUrl = branches.index();
 const mechanicsUrl = mechanics.index();
 const productsUrl = products.index();
@@ -38,14 +44,14 @@ export function AppSidebar() {
     const userPermissions = auth.permissions??[];
         
     const mainNavItems: NavItem[] = [
-    ...(can(userPermissions, 'sales.view')
-        ? [{title: 'Dashboard',href: '/dashboard',icon: LayoutGrid,}]
+    ...(can(userPermissions, 'dashboard.view')
+        ? [{title: 'Dashboard',href: dashboardUrl,icon: LayoutGrid,}]
         : []),
     ...(can(userPermissions, 'sales.view')
-        ? [{ title: 'Ventas (POS)', href: '/sales', icon: ShoppingCart }]
+        ? [{ title: 'Ventas (POS)', href: salesUrl, icon: ShoppingCart }]
         : []),
     ...(can(userPermissions, 'inventory.view')
-        ? [{title: 'Inventario',href: '/inventory',icon: Boxes,}]
+        ? [{title: 'Inventario',href: inventoryUrl,icon: Boxes,}]
         : []),
 /*     ...(can(userPermissions, 'inventory-movements.view')
         ? [{title: 'Movimientos',href: '/inventory-movements',icon: Split,}]
