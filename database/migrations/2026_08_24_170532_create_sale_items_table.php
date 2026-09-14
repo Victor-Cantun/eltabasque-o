@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sale_id')->constrained()->restrictOnDelete();
             $table->string('item_type', 20)->default('product');
-            $table->foreignId('mechanic_id')->nullable()->constrained('mechanics')->nullOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->restrictOnDelete();
             $table->string('description')->nullable();
             $table->foreignId('price_type_id')->nullable()->constrained()->nullOnDelete();
