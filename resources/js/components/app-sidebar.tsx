@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Bike, House, User, Notebook, FolderKey, ShoppingCart } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, Bike, House, User, Notebook, FolderKey, ShoppingCart, Boxes, Split } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -29,38 +29,27 @@ const usersUrl = users.index();
 const rolesUrl = roles.index();
 const permissionsUrl = permissionsRoutes.index();
 /*Código para permisos*/
-
 import { usePage } from '@inertiajs/react';
 import { can } from '@/lib/permissions';
-
 /*Código para permisos*/
 
 export function AppSidebar() {
     const { auth } = usePage().props;
     const userPermissions = auth.permissions??[];
-    
-    //console.log("permisos",userPermissions);
-    
+        
     const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-
-    /* {title: 'Inventario',href: '/inventory',icon: LayoutGrid,},
-    {title: 'Sucursales',href: branchesUrl,icon: House,},
-    {title: 'Productos',href: productsUrl,icon: Bike,},
-    {title: 'Roles',href: rolesUrl,icon: Notebook,},
-    {title: 'Permisos',href: permissionsUrl,icon: FolderKey,},
-    {title: 'Usuarios',href: usersUrl,icon: User,}, 
-    ]*/
+    ...(can(userPermissions, 'sales.view')
+        ? [{title: 'Dashboard',href: dashboard(),icon: LayoutGrid,}]
+        : []),
     ...(can(userPermissions, 'sales.view')
         ? [{ title: 'Ventas (POS)', href: '/sales', icon: ShoppingCart }]
         : []),
     ...(can(userPermissions, 'inventory.view')
-        ? [{title: 'Inventario',href: '/inventory',icon: LayoutGrid,}]
-        : []),   
+        ? [{title: 'Inventario',href: '/inventory',icon: Boxes,}]
+        : []),
+/*     ...(can(userPermissions, 'inventory-movements.view')
+        ? [{title: 'Movimientos',href: '/inventory-movements',icon: Split,}]
+        : []),  */           
     ...(can(userPermissions, 'branches.view')
         ? [{title: 'Sucursales',href: branchesUrl,icon: House,}]
         : []),

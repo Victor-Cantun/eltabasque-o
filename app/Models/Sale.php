@@ -10,7 +10,7 @@ class Sale extends Model
         'folio',
         'branch_id',
         'user_id',
-        'customer_id',
+        // 'customer_id',
         'sale_type',
         'subtotal',
         'discount',
@@ -18,6 +18,8 @@ class Sale extends Model
         'total',
         'service_total',
         'products_total',
+        'received_amount',
+        'change_amount',
         'status',
         'cancelled_at',
         'cancelled_by',
@@ -31,6 +33,8 @@ class Sale extends Model
         'total' => 'decimal:2',
         'service_total' => 'decimal:2',
         'products_total' => 'decimal:2',
+        'received_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
         'cancelled_at' => 'datetime',
     ];
 
@@ -44,15 +48,15 @@ class Sale extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
+    /*  public function customer()
+     {
+         return $this->belongsTo(Customer::class);
+     } */
 
-    public function items()
-    {
-        return $this->hasMany(SaleItem::class);
-    }
+    /*     public function items()
+        {
+            return $this->hasMany(SaleItem::class);
+        } */
 
     public function payments()
     {
@@ -67,5 +71,17 @@ class Sale extends Model
     public function cancelledBy()
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    // nuevas
+    public function items()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
+    // solo productos ahora
+    public function serviceItems()
+    {
+        return $this->hasMany(SaleServiceItem::class);
     }
 }

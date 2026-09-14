@@ -23,10 +23,7 @@ class SaleService
     public function createSale(array $data, User $user): Sale
     {
         // Pre-verificación de stock en la sucursal seleccionada para productos
-        foreach ($data['items'] as $index => $item) {
-            if (empty($item['product_id'])) {
-                continue; // Los servicios no requieren verificación de inventario
-            }
+        foreach ($data['items'] ?? [] as $index => $item) {
 
             $inventory = Inventory::where('branch_id', $data['branch_id'])
                 ->where('product_id', $item['product_id'])
@@ -52,39 +49,24 @@ class SaleService
 
             $folio = sprintf('VEN-%02d-%s-%04d', $branchId, $dateStr, $countToday);
 
-            // Calcular totales de los ítems
-            $subtotal = 0;
-            $serviceTotal = 0;
             $productsTotal = 0;
-            $itemsToCreate = [];
+            $serviceTotal = 0;
+            $productItemsToCreate = [];
+            $serviceItemsToCreate = [];
 
-            foreach ($data['items'] as $item) {
-                $isService = empty($item['product_id']) || (($item['item_type'] ?? '') === 'service');
-                $itemType = $isService ? 'service' : 'product';
-                $productId = ! $isService && ! empty($item['product_id']) ? $item['product_id'] : null;
-                $mechanicId = $isService && ! empty($item['mechanic_id']) ? $item['mechanic_id'] : null;
-
-                $product = $productId ? Product::find($productId) : null;
+            foreach ($data['items'] ?? [] as $item) {
+                $product = Product::find($item['product_id']);
                 $quantity = (float) $item['quantity'];
                 $unitPrice = (float) $item['unit_price'];
                 $itemDiscount = (float) ($item['discount'] ?? 0);
                 $itemSubtotal = $quantity * $unitPrice;
                 $itemTotal = max(0, $itemSubtotal - $itemDiscount);
+                $productsTotal += $itemTotal;
 
-                $subtotal += $itemTotal;
-
-                if ($isService) {
-                    $serviceTotal += $itemTotal;
-                } else {
-                    $productsTotal += $itemTotal;
-                }
-
-                $itemsToCreate[] = [
-                    'product_id' => $productId,
-                    'item_type' => $itemType,
-                    'mechanic_id' => $mechanicId,
+                $productItemsToCreate[] = [
+                    'product_id' => $item['product_id'],
                     'price_type_id' => $item['price_type_id'] ?? null,
-                    'description' => $item['description'] ?? ($product ? $product->name : 'Servicio / Mano de Obra'),
+                    'description' => $item['description'] ?? $product?->name,
                     'quantity' => $quantity,
                     'unit_cost' => $product ? (float) $product->cost : 0.0,
                     'unit_price' => $unitPrice,
@@ -94,42 +76,75 @@ class SaleService
                 ];
             }
 
+            foreach ($data['services'] ?? [] as $service) {
+                $quantity = (float) $service['quantity'];
+                $unitPrice = (float) $service['unit_price'];
+                $serviceDiscount = (float) ($service['discount'] ?? 0);
+                $serviceSubtotal = $quantity * $unitPrice;
+                $serviceTotalItem = max(0, $serviceSubtotal - $serviceDiscount);
+                $serviceTotal += $serviceTotalItem;
+
+                $serviceItemsToCreate[] = [
+                    'mechanic_id' => $service['mechanic_id'],
+                    'description' => $service['description'],
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'discount' => $serviceDiscount,
+                    'subtotal' => $serviceSubtotal,
+                    'total' => $serviceTotalItem,
+                ];
+            }
+
+            $subtotal = $productsTotal + $serviceTotal;
             $discount = (float) ($data['discount'] ?? 0);
             $tax = (float) ($data['tax'] ?? 0);
             $total = max(0, $subtotal - $discount + $tax);
+            $receivedAmount = isset($data['received_amount']) ? (float) $data['received_amount'] : null;
+            $changeAmount = $receivedAmount !== null ? max(0, $receivedAmount - $total) : 0.00;
 
             $sale = Sale::create([
                 'folio' => $folio,
                 'branch_id' => $branchId,
                 'user_id' => $user->id,
                 'customer_id' => $data['customer_id'] ?? null,
-                'sale_type' => $data['sale_type'] ?? 'retail',
+                // 'sale_type' => $data['sale_type'] ?? 'retail',
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'tax' => $tax,
                 'total' => $total,
                 'service_total' => $serviceTotal,
                 'products_total' => $productsTotal,
+                'received_amount' => $receivedAmount,
+                'change_amount' => $changeAmount,
                 'status' => 'completed',
             ]);
 
-            foreach ($itemsToCreate as $itemData) {
-                $sale->items()->create($itemData);
+            // Registrar pago en efectivo por defecto
+            $sale->payments()->create([
+                'user_id' => $user->id,
+                'method' => 'cash',
+                'amount' => $total,
+                'paid_at' => now(),
+            ]);
 
-                // Descontar inventario de la sucursal únicamente para productos
-                if ($itemData['item_type'] === 'product' && ! empty($itemData['product_id'])) {
-                    $this->inventoryService->registerMovement([
-                        'branch_id' => $branchId,
-                        'product_id' => $itemData['product_id'],
-                        'type' => InventoryMovement::TYPE_SALE,
-                        'quantity' => $itemData['quantity'],
-                        'reason' => "Venta Folio {$sale->folio}",
-                        'notes' => 'Venta registrada en POS',
-                        'reference_type' => 'sale',
-                        'reference_id' => $sale->id,
-                        'user_id' => $user->id,
-                    ]);
-                }
+            // foreach ($itemsToCreate as $itemData) {
+            foreach ($productItemsToCreate as $itemData) {
+                $sale->items()->create($itemData);
+                $this->inventoryService->registerMovement([
+                    'branch_id' => $branchId,
+                    'product_id' => $itemData['product_id'],
+                    'type' => InventoryMovement::TYPE_SALE,
+                    'quantity' => $itemData['quantity'],
+                    'reason' => "Venta Folio {$sale->folio}",
+                    'notes' => 'Venta registrada en POS',
+                    'reference_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'user_id' => $user->id,
+                ]);
+            }
+
+            foreach ($serviceItemsToCreate as $serviceData) {
+                $sale->serviceItems()->create($serviceData);
             }
 
             return $sale;

@@ -7,7 +7,6 @@ use App\Http\Requests\Product\UpdateProductRequest;
 use App\Models\Branch;
 use App\Models\Brand;
 use App\Models\Category;
-use App\Models\Inventory;
 use App\Models\PriceType;
 use App\Models\Product;
 use App\Services\ProductService;
@@ -34,7 +33,7 @@ class ProductController extends Controller
         $search = $request->input('search');
         $active = $request->input('active');
         $branchId = $request->input('branch_id');
-         // Vendedor: forzado a su sucursal
+        // Vendedor: forzado a su sucursal
         // Non-admins can only see their assigned branch
         if (! $isAdmin && ! empty($userBranchIds)) {
             if (! $branchId || ! in_array((int) $branchId, $userBranchIds)) {
@@ -43,40 +42,39 @@ class ProductController extends Controller
         }
 
         $products = Product::query()
-        ->select([
-            'id', 'internal_code', 'original_code', 'name',
-            'description', 'image', 'cost', 'active', 'created_at',
-        ])
-        ->with(['prices.priceType'])
-        ->withSum(['inventories as stock' => function ($query) use ($branchId, $isAdmin, $userBranchIds) {
-            if ($branchId) {
-                $query->where('branch_id', $branchId);
-            } elseif (! $isAdmin) {
-                $query->whereIn('branch_id', $userBranchIds);
-            }
-            // admin sin branchId => suma stock de TODAS las sucursales
-        }], 'stock')
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('internal_code', 'like', "%{$search}%")
-                    ->orWhere('original_code', 'like', "%{$search}%");
-            });
-        })
-        ->when($active !== null && $active !== '', function ($query) use ($active) {
-            $query->where('active', (bool) $active);
-        })
-        ->orderBy('stock')
-        ->paginate(20)
-        ->withQueryString();
-
+            ->select([
+                'id', 'internal_code', 'original_code', 'name',
+                'description', 'image', 'cost', 'active', 'created_at',
+            ])
+            ->with(['prices.priceType'])
+            ->withSum(['inventories as stock' => function ($query) use ($branchId, $isAdmin, $userBranchIds) {
+                if ($branchId) {
+                    $query->where('branch_id', $branchId);
+                } elseif (! $isAdmin) {
+                    $query->whereIn('branch_id', $userBranchIds);
+                }
+                // admin sin branchId => suma stock de TODAS las sucursales
+            }], 'stock')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('internal_code', 'like', "%{$search}%")
+                        ->orWhere('original_code', 'like', "%{$search}%");
+                });
+            })
+            ->when($active !== null && $active !== '', function ($query) use ($active) {
+                $query->where('active', (bool) $active);
+            })
+            ->orderBy('stock')
+            ->paginate(20)
+            ->withQueryString();
 
         $branches = $isAdmin
             ? Branch::query()->orderBy('name')->get(['id', 'name'])
             : Branch::query()->whereIn('id', $userBranchIds)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('products/index', [
-            //'inventories' => $inventories,
+            // 'inventories' => $inventories,
             'products' => $products,
             'branches' => $branches,
             'isAdmin' => $isAdmin,
@@ -100,9 +98,9 @@ class ProductController extends Controller
                     ->orderBy('name')
                     ->get(['id', 'name']),
 
-                'brands' => Brand::query()
+                /* 'brands' => Brand::query()
                     ->orderBy('name')
-                    ->get(['id', 'name']),
+                    ->get(['id', 'name']), */
 
                 'priceTypes' => PriceType::query()
                     ->where('active', true)
@@ -142,20 +140,24 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Response
     {
-        $product->load(['category', 'brand', 'prices.priceType']);
+        $product->load([
+            // 'category',
+            // 'brand',
+            'prices.priceType',
+        ]);
 
         return Inertia::render(
             'products/edit',
             [
                 'product' => $product,
 
-                'categories' => Category::query()
+                /* 'categories' => Category::query()
                     ->orderBy('name')
                     ->get(['id', 'name']),
 
                 'brands' => Brand::query()
                     ->orderBy('name')
-                    ->get(['id', 'name']),
+                    ->get(['id', 'name']), */
 
                 'priceTypes' => PriceType::query()
                     ->where('active', true)

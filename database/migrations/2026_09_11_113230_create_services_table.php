@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inventory_transfer_items', function (Blueprint $table) {
+        Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inventory_transfer_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->restrictOnDelete();
-            $table->decimal('quantity', 12, 2);
-            $table->decimal('received_quantity', 12, 2)->default(0);
             $table->timestamps();
         });
     }
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inventory_transfer_items');
+        Schema::dropIfExists('services');
     }
 };

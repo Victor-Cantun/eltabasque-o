@@ -455,7 +455,7 @@ export default function UserForm({
                 <button
                     type="submit"
                     disabled={processing}
-                    className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                    className="hover:cursor-pointer rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 >
                     {processing
                         ? 'Guardando...'

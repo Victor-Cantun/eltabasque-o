@@ -49,7 +49,7 @@ export default function Index({ movements }: Props) {
 
                 <div className="overflow-x-auto rounded-xl border">
                     <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
+                        <thead className="bg-blue-800 text-white">
                             <tr>
                                 <th className="p-3 text-left">Fecha</th>
                                 <th className="p-3 text-left">Sucursal</th>

@@ -16,4 +16,15 @@ declare module '@inertiajs/core' {
             [key: string]: unknown;
         };
     }
+    interface PageProps extends SharedData{}
+}
+/* declare module '@inertiajs/core' {
+   
+} */
+export interface SharedData{
+    [key: string]:unknown;
+    flash:{
+        success?:string;
+        error?:string;
+    };
 }

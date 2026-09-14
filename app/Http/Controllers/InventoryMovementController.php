@@ -21,7 +21,7 @@ class InventoryMovementController extends Controller
     public function index(): Response
     {
         $movements = InventoryMovement::query()
-            ->with(['branch:id,name', 'product:id,name,sku', 'user:id,name'])
+            ->with(['branch:id,name', 'product:id,name,internal_code,original_code', 'user:id,name'])
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -54,7 +54,7 @@ class InventoryMovementController extends Controller
 
             'products' => Product::query()
                 ->where('active', true)
-                ->select('id', 'name', 'sku', 'barcode')
+                ->select('id', 'name', 'internal_code', 'original_code')
                 ->orderBy('name')
                 ->get(),
         ]);

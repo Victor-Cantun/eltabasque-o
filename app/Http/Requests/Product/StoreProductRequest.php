@@ -44,14 +44,14 @@ class StoreProductRequest extends FormRequest
                 'nullable',
                 'string',
             ],
-            'category_id' => [
+            /* 'category_id' => [
                 'nullable',
                 'exists:categories,id',
             ],
             'brand_id' => [
                 'nullable',
                 'exists:brands,id',
-            ],
+            ], */
             'image' => [
                 'nullable',
                 'image',
@@ -81,6 +81,7 @@ class StoreProductRequest extends FormRequest
             ],
         ];
     }
+
     public function attributes(): array
     {
         return [
@@ -88,8 +89,8 @@ class StoreProductRequest extends FormRequest
             'original_code' => 'Código original',
             'name' => 'producto',
             'description' => 'descripción',
-            'category_id' => 'categoria',
-            'brand_id' => 'marca',
+            // 'category_id' => 'categoria',
+            // 'brand_id' => 'marca',
             'image' => 'imagen del producto',
             'cost' => 'costo',
             'active' => 'activo',

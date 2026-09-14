@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, ShoppingCart, Eye, Calendar, Building2, Filter, RotateCcw, Wrench, Package, DollarSign, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,22 +13,31 @@ type Branch = {
 type Mechanic = {
     id: number;
     name: string;
+    branches: {id:number}[];
 };
+
+type SaleServiceItem = {
+    id:number;
+    description:string;
+    quantity:string|number;
+    unit_price:string|number;
+    discount:string|number;
+    subtotal:string|number;
+    total:string|number;
+    mechanic?:Mechanic|null;
+}
 
 type SaleItem = {
     id: number;
-    item_type?: 'product' | 'service';
+    //item_type?: 'product' | 'service';
     quantity: string | number;
     unit_price: string | number;
     total: string | number;
     product?: {
         id: number;
         name: string;
-        sku: string;
-    };
-    mechanic?: {
-        id: number;
-        name: string;
+        internal_code: string;
+        original_code: string;
     };
 };
 
@@ -48,6 +57,7 @@ type Sale = {
     user: { id: number; name: string };
     customer?: { id: number; name: string } | null;
     items: SaleItem[];
+    serviceItems: SaleServiceItem[];
 };
 
 type PaginationLink = {
@@ -109,13 +119,29 @@ export default function Index({
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
     const [mechanicId, setMechanicId] = useState(filters.mechanic_id ?? '');
 
+    const isInitialMount = useRef(true);
+
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
             applyFilters();
         }, 400);
 
         return () => clearTimeout(timeout);
     }, [search]);
+
+    useEffect(() => {
+        setBranchId(filters.branch_id ?? '');
+        setStatus(filters.status ?? '');
+        setSearch(filters.search ?? '');
+        setDateFrom(filters.date_from ?? '');
+        setDateTo(filters.date_to ?? '');
+        setMechanicId(filters.mechanic_id ?? '');
+    }, [filters.branch_id, filters.status, filters.date_from, filters.date_to, filters.mechanic_id]);
 
     const applyFilters = () => {
         router.get(
@@ -137,6 +163,19 @@ export default function Index({
 
     const handleBranchChange = (value: string) => {
         setBranchId(value);
+
+        let newMechanicId = mechanicId;
+        if (value && mechanicId) {
+            const branchIdNum = Number(value);
+            const mechanicBelongs = mechanics.some(
+                (m) => String(m.id) === String(mechanicId) && m.branches.some((b) => b.id === branchIdNum)
+            );
+            if (!mechanicBelongs) {
+                newMechanicId = '';
+                setMechanicId('');
+            }
+        }
+
         router.get(
             '/sales',
             {
@@ -145,7 +184,7 @@ export default function Index({
                 search: search || undefined,
                 date_from: dateFrom || undefined,
                 date_to: dateTo || undefined,
-                mechanic_id: mechanicId || undefined,
+                mechanic_id: newMechanicId || undefined,
             },
             { preserveState: true, preserveScroll: true }
         );
@@ -191,8 +230,8 @@ export default function Index({
                 branch_id: branchId || undefined,
                 status: status || undefined,
                 search: search || undefined,
-                date_from: value || undefined,
-                date_to: dateTo || undefined,
+                date_from: value,
+                date_to: dateTo,
                 mechanic_id: mechanicId || undefined,
             },
             { preserveState: true, preserveScroll: true }
@@ -207,8 +246,8 @@ export default function Index({
                 branch_id: branchId || undefined,
                 status: status || undefined,
                 search: search || undefined,
-                date_from: dateFrom || undefined,
-                date_to: value || undefined,
+                date_from: dateFrom,
+                date_to: value,
                 mechanic_id: mechanicId || undefined,
             },
             { preserveState: true, preserveScroll: true }
@@ -225,6 +264,28 @@ export default function Index({
         router.get('/sales');
     };
 
+    const canSelectBranch = isAdmin || branches.length > 1;
+
+    // Helper para obtener los mecanicos por sucursal seleccionada
+    const getMechanicsForBranch = (mechanics: Mechanic[], branchId: number): Mechanic[] => {
+        // Si no hay sucursal seleccionada ("Todas" o vista general por admin/usuario con acceso a múltiples sucursales)
+        if (!branchId) {
+            if (isAdmin) {
+                return mechanics;
+            }
+            const allowedBranchIds = branches.map((b) => b.id);
+            return mechanics.filter((mechanic) => 
+                mechanic.branches.some((branch) => allowedBranchIds.includes(branch.id))
+            );
+        }
+
+        return mechanics.filter((mechanic) => 
+            mechanic.branches.some((branch) => branch.id === branchId)
+        );
+    };
+
+    const branchMechanics = getMechanicsForBranch(mechanics, Number(branchId));
+    
     return (
         <>
             <Head title="Ventas e Ingresos" />
@@ -390,10 +451,10 @@ export default function Index({
                             <select
                                 value={branchId}
                                 onChange={(e) => handleBranchChange(e.target.value)}
-                                disabled={!isAdmin}
+                                disabled={!canSelectBranch}
                                 className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-80 disabled:cursor-not-allowed"
                             >
-                                {isAdmin && <option value="">Todas</option>}
+                                {canSelectBranch && <option value="">Todas</option>}
                                 {branches.map((b) => (
                                     <option key={b.id} value={b.id}>
                                         {b.name}
@@ -411,7 +472,7 @@ export default function Index({
                                 className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             >
                                 <option value="">Todos los mecánicos</option>
-                                {mechanics.map((m) => (
+                                {branchMechanics.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.name}
                                     </option>
@@ -485,8 +546,12 @@ export default function Index({
                             <thead className="border-b bg-blue-800 text-white text-xs uppercase ">
                                 <tr>
                                     <th className="px-4 py-3 text-left">Folio</th>
-                                    <th className="px-4 py-3 text-left">Sucursal</th>
-                                    <th className="px-4 py-3 text-left">Cajero</th>
+                                    {isAdmin &&(
+                                        <th className="px-4 py-3 text-left">Sucursal</th>
+                                    )}
+                                    {isAdmin && (
+                                        <th className="px-4 py-3 text-left">Cajero</th>
+                                    )}
                                     <th className="px-4 py-3 text-left">Cliente</th>
                                     <th className="px-4 py-3 text-right">Refacciones</th>
                                     <th className="px-4 py-3 text-right">Servicios</th>
@@ -501,13 +566,17 @@ export default function Index({
                                 {sales.data.map((sale) => (
                                     <tr key={sale.id} className="transition-colors hover:bg-muted/30">
                                         <td className="px-4 py-3 font-semibold text-foreground">{sale.folio}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1.5 font-medium">
-                                                <Building2 className="size-3.5 text-muted-foreground" />
-                                                {sale.branch.name}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-muted-foreground">{sale.user.name}</td>
+                                        {isAdmin && (
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1.5 font-medium">
+                                                    <Building2 className="size-3.5 text-muted-foreground" />
+                                                    {sale.branch.name}
+                                                </div>
+                                            </td>
+                                        ) }
+                                        {isAdmin &&(
+                                            <td className="px-4 py-3 text-muted-foreground">{sale.user.name}</td>
+                                        ) }
                                         <td className="px-4 py-3">{sale.customer?.name ?? 'Público general'}</td>
                                         <td className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">
                                             ${Number(sale.products_total ?? 0).toFixed(2)}

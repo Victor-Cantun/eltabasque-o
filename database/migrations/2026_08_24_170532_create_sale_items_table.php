@@ -14,9 +14,15 @@ return new class extends Migration
         Schema::create('sale_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sale_id')->constrained()->restrictOnDelete();
-            $table->foreignId('product_id')->constrained()->restrictOnDelete();
+            $table->string('item_type', 20)->default('product');
+            $table->foreignId('mechanic_id')->nullable()->constrained('mechanics')->nullOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()->restrictOnDelete();
+            $table->string('description')->nullable();
             $table->foreignId('price_type_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('quantity', 12, 2);
+            $table->decimal('unit_price', 12, 2)->default(0);
+            $table->decimal('unit_cost', 12, 2)->default(0);
+            $table->decimal('discount', 12, 2)->default(0);
             $table->decimal('subtotal', 12, 2);
             $table->decimal('total', 12, 2);
             $table->timestamps();

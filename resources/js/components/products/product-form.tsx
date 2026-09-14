@@ -95,77 +95,25 @@ export default function ProductForm({
     }
 
     return (
-        <form
-            onSubmit={submit}
-            className="space-y-6"
-        >
+        <form onSubmit={submit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-
                 {/* Nombre */}
-
                 <div>
-                    <label className="text-sm font-medium">
-                        Nombre
-                    </label>
-
-                    <input
-                        type="text"
-                        value={data.name}
-                        onChange={(event) =>
-                            setData('name', event.target.value)
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    />
-
-                    {errors.name && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.name}
-                        </p>
-                    )}
+                    <label className="text-sm font-medium">Nombre</label>
+                    <input type="text" value={data.name} onChange={(event) => setData('name', event.target.value)} className="mt-2 w-full rounded-md border p-2" />
+                    {errors.name && ( <p className="mt-1 text-sm text-red-500"> {errors.name}</p>)}
                 </div>
-
                 {/* SKU */}
-
                 <div>
-                    <label className="text-sm font-medium">
-                        Código interno
-                    </label>
-
-                    <input
-                        type="text"
-                        value={data.internal_code}
-                        onChange={(event) =>
-                            setData('internal_code', event.target.value)
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    />
-
-                    {errors.internal_code && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.internal_code}
-                        </p>
-                    )}
+                    <label className="text-sm font-medium">Código interno</label>
+                    <input type="text" value={data.internal_code} onChange={(event) => setData('internal_code', event.target.value)} className="mt-2 w-full rounded-md border p-2" />
+                    {errors.internal_code && (<p className="mt-1 text-sm text-red-500">{errors.internal_code}</p>)}
                 </div>
                 {/* Código de barras */}
                 <div>
-                    <label className="text-sm font-medium">
-                        Código original
-                    </label>
-
-                    <input
-                        type="text"
-                        value={data.original_code}
-                        onChange={(event) =>
-                            setData('original_code', event.target.value)
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    />
-
-                    {errors.original_code && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.original_code}
-                        </p>
-                    )}
+                    <label className="text-sm font-medium">Código original</label>
+                    <input type="text" value={data.original_code} onChange={(event) => setData('original_code', event.target.value)} className="mt-2 w-full rounded-md border p-2" />
+                    {errors.original_code && ( <p className="mt-1 text-sm text-red-500"> {errors.original_code} </p> )}
                 </div>
                 {/* Stock mínimo */}
 {/*                 <div>
@@ -194,239 +142,78 @@ export default function ProductForm({
                     )}
                 </div>   */}              
                 {/* Categoría */}
-
-                <div>
-                    <label className="text-sm font-medium">
-                        Categoría
-                    </label>
-
-                    <select
-                        value={data.category_id}
-                        onChange={(event) =>
-                            setData(
-                                'category_id',
-                                event.target.value,
-                            )
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    >
+               {/*  <div>
+                    <label className="text-sm font-medium">Categoría</label>
+                    <select value={data.category_id} onChange={(event) => setData('category_id', event.target.value,)} className="mt-2 w-full rounded-md border p-2" >
                         <option value="">
                             Selecciona una categoría
                         </option>
-
                         {categories.map((category) => (
-                            <option
-                                key={category.id}
-                                value={category.id}
-                            >
+                            <option key={category.id} value={category.id}>
                                 {category.name}
                             </option>
                         ))}
                     </select>
-
-                    {errors.category_id && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.category_id}
-                        </p>
-                    )}
-                </div>
-
+                    {errors.category_id && (<p className="mt-1 text-sm text-red-500">{errors.category_id}</p>)}
+                </div> */}
                 {/* Marca */}
-
-                <div>
-                    <label className="text-sm font-medium">
-                        Marca
-                    </label>
-
-                    <select
-                        value={data.brand_id}
-                        onChange={(event) =>
-                            setData(
-                                'brand_id',
-                                event.target.value,
-                            )
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    >
-                        <option value="">
-                            Selecciona una marca
-                        </option>
-
+                {/* <div>
+                    <label className="text-sm font-medium">Marca</label>
+                    <select value={data.brand_id} onChange={(event) => setData('brand_id',event.target.value,)} className="mt-2 w-full rounded-md border p-2">
+                        <option value="">Selecciona una marca</option>
                         {brands.map((brand) => (
-                            <option
-                                key={brand.id}
-                                value={brand.id}
-                            >
+                            <option key={brand.id} value={brand.id}>
                                 {brand.name}
                             </option>
                         ))}
                     </select>
-
-                    {errors.brand_id && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.brand_id}
-                        </p>
-                    )}
-                </div>
-
+                    {errors.brand_id && (<p className="mt-1 text-sm text-red-500"> {errors.brand_id}</p>)}
+                </div> */}
                 {/* Costo */}
-
                 <div>
-                    <label className="text-sm font-medium">
-                        Costo
-                    </label>
-
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={data.cost}
-                        onChange={(event) =>
-                            setData(
-                                'cost',
-                                event.target.value,
-                            )
-                        }
-                        className="mt-2 w-full rounded-md border p-2"
-                    />
-
-                    {errors.cost && (
-                        <p className="mt-1 text-sm text-red-500">
-                            {errors.cost}
-                        </p>
-                    )}
+                    <label className="text-sm font-medium">Costo</label>
+                    <input type="number" step="0.01" value={data.cost} onChange={(event) => setData('cost',event.target.value,)} className="mt-2 w-full rounded-md border p-2" />
+                    {errors.cost && (<p className="mt-1 text-sm text-red-500">{errors.cost}</p>)}
                 </div>
-
             </div>
-
             {/* Descripción */}
-
             <div>
-                <label className="text-sm font-medium">
-                    Descripción
-                </label>
-
-                <textarea
-                    value={data.description}
-                    onChange={(event) =>
-                        setData(
-                            'description',
-                            event.target.value,
-                        )
-                    }
-                    className="mt-2 w-full rounded-md border p-2"
-                    rows={4}
-                />
-
-                {errors.description && (
-                    <p className="mt-1 text-sm text-red-500">
-                        {errors.description}
-                    </p>
-                )}
+                <label className="text-sm font-medium">Descripción</label>
+                <textarea value={data.description} onChange={(event) => setData('description',event.target.value,)} className="mt-2 w-full rounded-md border p-2" rows={4} />
+                {errors.description && (<p className="mt-1 text-sm text-red-500">{errors.description}</p>)}
             </div>
-
             {/* Precios */}
-
             <div className="border-t pt-6">
-
-                <h2 className="text-lg font-semibold">
-                    Precios
-                </h2>
-
+                <h2 className="text-lg font-semibold">Precios</h2>
                 <div className="mt-4 grid gap-4 md:grid-cols-3">
-
                     {priceTypes.map((priceType, index) => (
-
                         <div key={priceType.id}>
-
-                            <label className="text-sm font-medium">
-                                {priceType.name}
-                            </label>
-
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={data.prices[index]?.price ?? ''}
+                            <label className="text-sm font-medium">{priceType.name}</label>
+                            <input type="number" step="0.01" value={data.prices[index]?.price ?? ''}
                                 onChange={(event) => {
-
-                                    const prices = [
-                                        ...data.prices,
-                                    ];
-
-                                    prices[index] = {
-                                        ...prices[index],
-                                        price: event.target.value,
-                                    };
-
-                                    setData(
-                                        'prices',
-                                        prices,
-                                    );
+                                    const prices = [...data.prices,];
+                                    prices[index] = {...prices[index],price: event.target.value,};
+                                    setData('prices',prices,);
                                 }}
                                 className="mt-2 w-full rounded-md border p-2"
                                 placeholder="0.00"
                             />
-
-                            {errors[
-                                `prices.${index}.price`
-                            ] && (
-                                <p className="mt-1 text-sm text-red-500">
-                                    {
-                                        errors[
-                                            `prices.${index}.price`
-                                        ]
-                                    }
-                                </p>
-                            )}
-
+                            {errors[`prices.${index}.price`] && (<p className="mt-1 text-sm text-red-500">{errors[`prices.${index}.price`] }</p>)}
                         </div>
-
                     ))}
-
                 </div>
-
             </div>
-
             {/* Imagen */}
-
             <div className="border-t pt-6">
-
-                <h2 className="text-lg font-semibold">
-                    Imagen
-                </h2>
-
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-
-                        const file =
-                            event.target.files?.[0] ?? null;
-
-                        setData('image', file);
-                    }}
-                    className="mt-4"
-                />
-
-                {errors.image && (
-                    <p className="mt-1 text-sm text-red-500">
-                        {errors.image}
-                    </p>
-                )}
-
+                <h2 className="text-lg font-semibold">Imagen</h2>
+                <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0] ?? null; setData('image', file);}} className="mt-4" />
+                {errors.image && (<p className="mt-1 text-sm text-red-500">{errors.image}</p>)}
             </div>
-
-            <button
-                type="submit"
-                disabled={processing}
-                className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-            >
-                {processing
-                    ? 'Guardando...'
-                    : mode === 'create'
-                      ? 'Guardar producto'
-                      : 'Actualizar producto'}
-            </button>
-
+            <div className="flex justify-end border-t pt-6">
+                <button type="submit" disabled={processing} className="hover:cursor-pointer rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
+                    {processing ? 'Guardando...' : mode === 'create'? 'Guardar producto': 'Actualizar producto'}
+                </button>
+            </div>
         </form>
     );
 }

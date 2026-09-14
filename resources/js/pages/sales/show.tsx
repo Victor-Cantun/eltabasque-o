@@ -13,7 +13,8 @@ type PriceType = {
 
 type Product = {
     id: number;
-    sku: string;
+    internal_code: string;
+    original_code:string;
     barcode?: string | null;
     name: string;
 };
@@ -23,9 +24,20 @@ type Mechanic = {
     name: string;
 };
 
+type SaleServiceItem = {
+    id:number;
+    description:string;
+    quantity:string|number;
+    unit_price:string|number;
+    discount:string|number;
+    subtotal:string|number;
+    total:string|number;
+    mechanic?:Mechanic|null;
+}
+
 type SaleItem = {
     id: number;
-    item_type?: 'product' | 'service';
+    //item_type?: 'product' | 'service';
     quantity: string | number;
     unit_cost: string | number;
     unit_price: string | number;
@@ -34,7 +46,7 @@ type SaleItem = {
     total: string | number;
     description?: string | null;
     product?: Product | null;
-    mechanic?: Mechanic | null;
+    //mechanic?: Mechanic | null;
     priceType?: PriceType | null;
 };
 
@@ -56,6 +68,8 @@ type Sale = {
     total: string | number;
     service_total?: string | number;
     products_total?: string | number;
+    received_amount?: string | number | null;
+    change_amount?: string | number | null;
     status: 'completed' | 'cancelled';
     cancelled_at?: string | null;
     cancellation_reason?: string | null;
@@ -65,6 +79,7 @@ type Sale = {
     customer?: { id: number; name: string; phone?: string; email?: string; address?: string } | null;
     cancelledBy?: { id: number; name: string } | null;
     items: SaleItem[];
+    service_items: SaleServiceItem[];
 };
 
 type Props = {
@@ -90,6 +105,7 @@ export default function Show({ sale }: Props) {
         });
     };
 
+    console.log("venta:",sale);
     return (
         <>
             <Head title={`Venta ${sale.folio}`} />
@@ -100,7 +116,7 @@ export default function Show({ sale }: Props) {
                     <div className="flex items-center gap-3">
                         <Link
                             href="/sales"
-                            className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
+                            className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted print:hidden"
                         >
                             <ArrowLeft className="size-4" />
                             Volver a Lista de Ventas
@@ -122,7 +138,7 @@ export default function Show({ sale }: Props) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 print:hidden">
                         <Button
                             type="button"
                             variant="outline"
@@ -200,106 +216,149 @@ export default function Show({ sale }: Props) {
                 </div>
 
                 {/* Tabla de Productos y Servicios de la Venta */}
-                <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                    <div className="p-4 border-b bg-muted/40 font-bold text-sm text-foreground flex items-center justify-between">
-                        <span>Conceptos de la Venta ({sale.items.length})</span>
+{/* Tabla de Refacciones */}
+<div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div className="p-4 border-b bg-muted/40 font-bold text-sm text-foreground">
+        Refacciones ({sale.items.length})
+    </div>
+    <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+            <thead className="border-b bg-muted/60 text-xs uppercase text-muted-foreground">
+                <tr>
+                    <th className="px-4 py-3 text-left">Internal code</th>
+                    <th className="px-4 py-3 text-left">Descripción</th>
+                    <th className="px-4 py-3 text-left">Precio</th>
+                    <th className="px-4 py-3 text-right">Cant.</th>
+                    <th className="px-4 py-3 text-right">P. Unitario</th>
+                    <th className="px-4 py-3 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y">
+                {sale.items.map((item) => (
+                    <tr key={item.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-mono text-xs font-semibold">
+                            <Badge variant="secondary" className="font-mono text-[11px]">
+                                SKU: {item.product?.internal_code}
+                            </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                            <div className="font-semibold text-foreground">{item.product?.name}</div>
+                            {item.product?.barcode && (
+                                <div className="text-[10px] text-muted-foreground">Cód: {item.product.barcode}</div>
+                            )}
+                        </td>
+                        <td className="px-4 py-3">
+                            <Badge variant="outline" className="text-xs font-medium gap-1">
+                                <Tag className="size-3 text-primary" />
+                                {item.priceType?.name ?? 'Público'}
+                            </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold">{Number(item.quantity)}</td>
+                        <td className="px-4 py-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">${Number(item.total).toFixed(2)}</td>
+                    </tr>
+                ))}
+                {sale.items.length === 0 && (
+                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-xs">Sin refacciones en esta venta.</td></tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{/* Tabla de Servicios */}
+<div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div className="p-4 border-b bg-amber-50/50 dark:bg-amber-950/20 font-bold text-sm text-foreground flex items-center gap-2">
+        <Wrench className="size-4 text-amber-600" />
+        Servicios / Mano de obra ({sale.service_items.length})
+    </div>
+    <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+            <thead className="border-b bg-muted/60 text-xs uppercase text-muted-foreground">
+                <tr>
+                    <th className="px-4 py-3 text-left">Descripción</th>
+                    <th className="px-4 py-3 text-left">Mecánico</th>
+                    <th className="px-4 py-3 text-right">Cant.</th>
+                    <th className="px-4 py-3 text-right">P. Unitario</th>
+                    <th className="px-4 py-3 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y">
+                {sale.service_items.map((service) => (
+                    <tr key={service.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-semibold text-foreground">{service.description}</td>
+                        <td className="px-4 py-3">
+                            {service.mechanic ? (
+                                <div className="inline-flex items-center gap-1.5 rounded-md bg-amber-100/70 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                                    <Wrench className="size-3" />
+                                    {service.mechanic.name}
+                                </div>
+                            ) : (
+                                <span className="text-xs text-muted-foreground italic">Sin mecánico asignado</span>
+                            )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold">{Number(service.quantity)}</td>
+                        <td className="px-4 py-3 text-right">${Number(service.unit_price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">${Number(service.total).toFixed(2)}</td>
+                    </tr>
+                ))}
+                {sale.service_items.length === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-xs">Sin servicios en esta venta.</td></tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+                {/* Resumen Total con Desglose */}
+                <div className="rounded-xl border bg-card shadow-sm border-t bg-muted/20 p-4 flex flex-col items-end gap-1.5 text-sm">
+                    <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
+                        <span>Total Refacciones:</span>
+                        <span className="font-semibold text-foreground">${Number(sale.products_total ?? 0).toFixed(2)}</span>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="border-b bg-muted/60 text-xs uppercase text-muted-foreground">
-                                <tr>
-                                    <th className="px-4 py-3 text-left">SKU / Tipo</th>
-                                    <th className="px-4 py-3 text-left">Descripción</th>
-                                    <th className="px-4 py-3 text-left">Mecánico / Precio</th>
-                                    <th className="px-4 py-3 text-right">Cant.</th>
-                                    <th className="px-4 py-3 text-right">P. Unitario</th>
-                                    <th className="px-4 py-3 text-right">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {sale.items.map((item) => (
-                                    <tr key={item.id} className="hover:bg-muted/20">
-                                        <td className="px-4 py-3 font-mono text-xs font-semibold">
-                                            {item.product ? (
-                                                <Badge variant="secondary" className="font-mono text-[11px]">
-                                                    SKU: {item.product.sku}
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 text-[11px] font-semibold gap-1">
-                                                    <Wrench className="size-3" />
-                                                    Servicio
-                                                </Badge>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="font-semibold text-foreground">
-                                                {item.product ? item.product.name : (item.description || 'Servicio / Mano de obra')}
-                                            </div>
-                                            {item.product?.barcode && (
-                                                <div className="text-[10px] text-muted-foreground">Cód: {item.product.barcode}</div>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {item.product ? (
-                                                <Badge variant="outline" className="text-xs font-medium gap-1">
-                                                    <Tag className="size-3 text-primary" />
-                                                    {item.priceType?.name ?? 'Público'}
-                                                </Badge>
-                                            ) : item.mechanic ? (
-                                                <div className="inline-flex items-center gap-1.5 rounded-md bg-amber-100/70 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                                                    <Wrench className="size-3" />
-                                                    {item.mechanic.name}
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground italic">Sin mecánico asignado</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-bold">{Number(item.quantity)}</td>
-                                        <td className="px-4 py-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
-                                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                                            ${Number(item.total).toFixed(2)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
+                        <span>Total Servicios (Mano de obra):</span>
+                        <span className="font-semibold text-amber-600">${Number(sale.service_total ?? 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between w-full max-w-xs text-muted-foreground border-t pt-1">
+                        <span>Subtotal:</span>
+                        <span className="font-semibold text-foreground">${Number(sale.subtotal).toFixed(2)}</span>
+                    </div>
+                    {Number(sale.discount) > 0 && (
+                        <div className="flex justify-between w-full max-w-xs text-emerald-600 font-medium text-xs">
+                            <span>Descuento:</span>
+                            <span>-${Number(sale.discount).toFixed(2)}</span>
+                        </div>
+                    )}
+                    {Number(sale.tax) > 0 && (
+                        <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
+                            <span>Impuesto:</span>
+                            <span>+${Number(sale.tax).toFixed(2)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between w-full max-w-xs border-t pt-2 text-lg font-bold text-foreground">
+                        <span>TOTAL:</span>
+                        <span className="text-primary">${Number(sale.total).toFixed(2)}</span>
                     </div>
 
-                    {/* Resumen Total con Desglose */}
-                    <div className="border-t bg-muted/20 p-4 flex flex-col items-end gap-1.5 text-sm">
-                        <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
-                            <span>Total Refacciones:</span>
-                            <span className="font-semibold text-foreground">
-                                ${Number(sale.products_total ?? 0).toFixed(2)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
-                            <span>Total Servicios (Mano de obra):</span>
-                            <span className="font-semibold text-amber-600">
-                                ${Number(sale.service_total ?? 0).toFixed(2)}
-                            </span>
-                        </div>
-                        <div className="flex justify-between w-full max-w-xs text-muted-foreground border-t pt-1">
-                            <span>Subtotal:</span>
-                            <span className="font-semibold text-foreground">${Number(sale.subtotal).toFixed(2)}</span>
-                        </div>
-                        {Number(sale.discount) > 0 && (
-                            <div className="flex justify-between w-full max-w-xs text-emerald-600 font-medium text-xs">
-                                <span>Descuento:</span>
-                                <span>-${Number(sale.discount).toFixed(2)}</span>
+                    {sale.received_amount !== undefined && sale.received_amount !== null && (
+                        <div className="w-full max-w-xs border-t border-dashed pt-2 mt-1 space-y-1">
+                            <div className="flex justify-between text-xs font-medium text-foreground">
+                                <span>Efectivo Recibido:</span>
+                                <span className="font-bold">${Number(sale.received_amount).toFixed(2)}</span>
                             </div>
-                        )}
-                        {Number(sale.tax) > 0 && (
-                            <div className="flex justify-between w-full max-w-xs text-muted-foreground text-xs">
-                                <span>Impuesto:</span>
-                                <span>+${Number(sale.tax).toFixed(2)}</span>
+                            <div className="flex justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                <span>Cambio / Vuelto:</span>
+                                <span>${Number(sale.change_amount ?? 0).toFixed(2)}</span>
                             </div>
-                        )}
-                        <div className="flex justify-between w-full max-w-xs border-t pt-2 text-lg font-bold text-foreground">
-                            <span>TOTAL:</span>
-                            <span className="text-primary">${Number(sale.total).toFixed(2)}</span>
                         </div>
-                    </div>
+                    )}
+                </div>
+
+                {/* Pie de ticket para impresión */}
+                <div className="hidden print:block text-center text-xs text-muted-foreground pt-4 pb-8 space-y-1">
+                    <p className="font-bold text-sm text-foreground">¡Gracias por su preferencia!</p>
+                    <p>Conserve este ticket como comprobante de pago para cualquier aclaración o reclamo.</p>
                 </div>
 
                 {/* Modal de Cancelación de Venta */}

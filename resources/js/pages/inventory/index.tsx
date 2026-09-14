@@ -101,6 +101,10 @@ export default function Index({ inventories, branches, filters }: Props) {
                         <Download className="h-4 w-4" />
                         Exportar CSV
                     </a>
+
+                    <Link href="/inventory-movements" className="rounded-md border px-4 py-2 text-sm">
+                        Historial de movimientos
+                    </Link>
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border">

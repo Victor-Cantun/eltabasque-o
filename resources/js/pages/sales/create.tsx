@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
-import { Search, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Building2, Tag, AlertCircle, CheckCircle2, User as UserIcon, Wrench, X } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Building2, Tag, AlertCircle, CheckCircle2, User as UserIcon, Wrench, X, Banknote, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -45,8 +45,8 @@ type Brand = {
 
 type Product = {
     id: number;
-    sku: string;
-    barcode?: string | null;
+    internal_code: string;
+    original_code?: string | null;
     name: string;
     cost: string | number;
     category?: Category | null;
@@ -65,6 +65,7 @@ type Customer = {
 type Mechanic = {
     id: number;
     name: string;
+    branches: {id:number}[];
 };
 
 type CartItem = {
@@ -116,10 +117,26 @@ export default function Create({
     const [isCreatingMechanic, setIsCreatingMechanic] = useState(false);
     const [newMechanicName, setNewMechanicName] = useState('');
 
+
+
+    // Modal de Cobro y Cálculo de Cambio
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [receivedAmount, setReceivedAmount] = useState<string>('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // Helper para obtener el stock de un producto en la sucursal seleccionada
     const getStockForBranch = (product: Product, branchId: number): number => {
         const inv = product.inventories?.find((i) => Number(i.branch_id) === Number(branchId));
         return inv ? Number(inv.stock) : 0;
+    };
+
+    // Helper para obtener los mecanicos por sucursal seleccionada
+    const getMechanicsForBranch = (mechanicsList: Mechanic[], branchId: number): Mechanic[] => {
+        // Aquí puedes filtrar los mecánicos según la sucursal si tienes esa información disponible
+        return mechanicsList.filter((mechanic) => 
+            mechanic.branches.some((branch)=>branch.id === branchId)
+        );
+        
     };
 
     // Helper para obtener el precio según el tipo de precio seleccionado
@@ -127,6 +144,8 @@ export default function Create({
         const priceObj = product.prices?.find((p) => Number(p.price_type_id) === Number(priceTypeId));
         return priceObj ? Number(priceObj.price) : Number(product.cost) * 1.2;
     };
+
+    const branchMechanics = getMechanicsForBranch(mechanicsList, currentBranchId);
 
     // Obtenemos categorías únicas de la lista de productos
     const categories = useMemo(() => {
@@ -143,8 +162,8 @@ export default function Create({
             const query = searchQuery.toLowerCase();
             const matchesSearch =
                 p.name.toLowerCase().includes(query) ||
-                p.sku.toLowerCase().includes(query) ||
-                (p.barcode && p.barcode.toLowerCase().includes(query));
+                p.internal_code.toLowerCase().includes(query) ||
+                (p.original_code && p.original_code.toLowerCase().includes(query));
 
             const matchesCategory = selectedCategoryId
                 ? String(p.category?.id) === selectedCategoryId
@@ -348,13 +367,32 @@ export default function Create({
         setCurrentBranchId(newBranchId);
     };
 
-    // Enviar formulario de Venta
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    // Cálculos de cobro y cambio
+    const parsedReceived = parseFloat(receivedAmount) || 0;
+    const changeDue = Math.max(0, parsedReceived - grandTotal);
+    const isUnderpaid = parsedReceived < grandTotal;
+
+    // Abrir cuadro de cobro
+    const openPaymentModal = () => {
         if (cart.length === 0) {
             alert('El carrito está vacío. Agrega productos o servicios para realizar la venta.');
             return;
         }
+        setReceivedAmount('');
+        setShowPaymentModal(true);
+    };
+
+    // Enviar formulario de Venta confirmado con dinero recibido
+    const handleConfirmSale = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (cart.length === 0) return;
+
+        if (isUnderpaid) {
+            alert(`El monto recibido ($${parsedReceived.toFixed(2)}) es insuficiente para cubrir el total ($${grandTotal.toFixed(2)}).`);
+            return;
+        }
+
+        setIsSubmitting(true);
 
         const payload = {
             branch_id: currentBranchId,
@@ -362,19 +400,39 @@ export default function Create({
             sale_type: 'retail',
             discount: globalDiscount,
             tax: taxAmount,
-            items: cart.map((item) => ({
+            received_amount: parsedReceived,
+            items: cart
+            .filter((item)=>item.item_type === 'product') 
+            .map((item) => ({
                 product_id: item.product_id,
-                item_type: item.item_type,
-                mechanic_id: item.mechanic_id ?? null,
+                price_type_id:item.price_type_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                discount: item.discount,
+            })),
+            services:cart
+            .filter((item)=>item.item_type==='service')
+            .map((item) => ({
+                mechanic_id: item.mechanic_id,
                 description: item.description,
-                price_type_id: item.price_type_id,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
                 discount: item.discount,
             })),
         };
 
-        router.post('/sales', payload);
+        router.post('/sales', payload, {
+            //onFinish: () => setIsSubmitting(false),
+            onSuccess:()=>{
+                setShowPaymentModal(false);
+                setCart([]);
+            },
+            onError:(errors)=>{
+                console.error('Errores al guardar la venta:',errors);
+                alert(Object.values(errors).join('\n'));
+            },
+            onFinish:()=>setIsSubmitting(false),
+        });
     };
 
     return (
@@ -428,7 +486,7 @@ export default function Create({
                                         type="text"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Buscar refacción por SKU, código o nombre..."
+                                        placeholder="Buscar refacción por código o nombre..."
                                         className="w-full rounded-lg border bg-card py-2.5 pl-10 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                         autoFocus
                                     />
@@ -491,23 +549,27 @@ export default function Create({
                                         }`}
                                     >
                                         <div>
-                                            <div className="flex items-start justify-between gap-1">
-                                                <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                                                    SKU: {product.sku}
-                                                </span>
-                                                <Badge
-                                                    variant={isOutOfStock ? 'destructive' : stock <= 5 ? 'outline' : 'secondary'}
-                                                    className={`text-[10px] px-1.5 py-0 font-bold ${
-                                                        !isOutOfStock && stock <= 5 ? 'border-amber-500 text-amber-600 bg-amber-50' : ''
-                                                    }`}
-                                                >
-                                                    Stock: {stock}
-                                                </Badge>
-                                            </div>
-
                                             <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-foreground group-hover:text-primary">
                                                 {product.name}
                                             </h3>
+                                            <div className="flex items-start justify-between gap-1">
+                                                <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                                                    Código interno: {product.internal_code} <br></br>
+                                                    Código original: {product.original_code}
+                                                </span>
+                                                
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <Badge
+                                                        variant={isOutOfStock ? 'destructive' : stock <= 5 ? 'outline' : 'secondary'}
+                                                        className={`text-[10px] px-1.5 py-0 font-bold ${
+                                                            !isOutOfStock && stock <= 5 ? 'border-amber-500 text-amber-600 bg-amber-50' : ''
+                                                        }`}
+                                                    >
+                                                        Stock: {stock}
+                                                </Badge>
+                                            </div>
+
                                         </div>
 
                                         <div className="mt-3 border-t pt-2">
@@ -527,7 +589,7 @@ export default function Create({
                                                 type="button"
                                                 disabled={isOutOfStock}
                                                 size="sm"
-                                                className="w-full h-8 text-xs font-semibold gap-1"
+                                                className="hover:cursor-pointer w-full h-8 text-xs font-semibold gap-1"
                                             >
                                                 <Plus className="size-3.5" />
                                                 {isOutOfStock ? 'Agotado' : 'Agregar Refacción'}
@@ -546,39 +608,41 @@ export default function Create({
                     </div>
 
                     {/* Sección Derecha: Carrito de Compras & Cobro (5 Cols) */}
-                    <div className="flex flex-col bg-card lg:col-span-5 border-l">
-                        {/* Cabecera del Carrito */}
-                        <div className="border-b p-3 bg-muted/30 flex items-center justify-between">
-                            <div className="flex items-center gap-2 font-bold text-foreground">
-                                <ShoppingCart className="size-5 text-primary" />
-                                Ticket de Venta ({cart.length} {cart.length === 1 ? 'ítem' : 'ítems'})
+                    <div className="flex flex-col bg-card lg:col-span-5 border-l overflow-y-scroll">
+                        <div className="position-stiket ">
+                            {/* Cabecera del Carrito */}
+                            <div className="border-b p-3 bg-muted/30 flex items-center justify-between">
+                                <div className="flex items-center gap-2 font-bold text-foreground">
+                                    <ShoppingCart className="size-5 text-primary" />
+                                    Ticket de Venta ({cart.length} {cart.length === 1 ? 'ítem' : 'ítems'})
+                                </div>
+                                {cart.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCart([])}
+                                        className="text-xs font-medium text-destructive hover:underline"
+                                    >
+                                        Vaciar carrito
+                                    </button>
+                                )}
                             </div>
-                            {cart.length > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setCart([])}
-                                    className="text-xs font-medium text-destructive hover:underline"
-                                >
-                                    Vaciar carrito
-                                </button>
-                            )}
-                        </div>
 
-                        {/* Cliente Selector (Opcional) */}
-                        <div className="border-b px-4 py-2 bg-background flex items-center gap-2">
-                            <UserIcon className="size-4 text-muted-foreground" />
-                            <select
-                                value={selectedCustomerId}
-                                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                                className="w-full bg-transparent text-xs font-medium text-foreground focus:outline-none cursor-pointer"
-                            >
-                                <option value="">Público general (Sin cliente)</option>
-                                {customers.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name} {c.phone ? `(${c.phone})` : ''}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Cliente Selector (Opcional) */}
+                            {/* <div className="border-b px-4 py-2 bg-background flex items-center gap-2">
+                                <UserIcon className="size-4 text-muted-foreground" />
+                                <select
+                                    value={selectedCustomerId}
+                                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                                    className="w-full bg-transparent text-xs font-medium text-foreground focus:outline-none cursor-pointer"
+                                >
+                                    <option value="">Público general (Sin cliente)</option>
+                                    {customers.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} {c.phone ? `(${c.phone})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div> */}
                         </div>
 
                         {/* Lista de Ítems en Carrito */}
@@ -603,7 +667,7 @@ export default function Create({
                                                     )}
                                                 </div>
                                                 {item.product && (
-                                                    <span className="text-[10px] text-muted-foreground">SKU: {item.product.sku}</span>
+                                                    <span className="text-[10px] text-muted-foreground">Código interno: {item.product.internal_code}</span>
                                                 )}
                                             </div>
                                             <button
@@ -744,7 +808,7 @@ export default function Create({
 
                             <Button
                                 type="button"
-                                onClick={handleSubmit}
+                                onClick={openPaymentModal}
                                 disabled={cart.length === 0}
                                 className="w-full py-6 text-base font-bold tracking-wide shadow-md transition-all gap-2"
                             >
@@ -832,7 +896,7 @@ export default function Create({
                                         className="w-full rounded-md border bg-background p-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                                     >
                                         <option value="">Sin asignar / Ninguno</option>
-                                        {mechanicsList.map((m) => (
+                                        {branchMechanics.map((m) => (
                                             <option key={m.id} value={m.id}>
                                                 {m.name}
                                             </option>
@@ -890,6 +954,138 @@ export default function Create({
                                     className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold"
                                 >
                                     Agregar Servicio
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Cobro y Cálculo de Cambio */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+                    <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+                        {/* Encabezado */}
+                        <div className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-2 text-primary font-bold text-lg">
+                                <Banknote className="size-6 text-emerald-600" />
+                                <span>Cobrar Venta</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowPaymentModal(false)}
+                                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        {/* Tarjeta de Total de la Venta */}
+                        <div className="rounded-xl border bg-muted/40 p-4 text-center space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Total a Pagar
+                            </span>
+                            <div className="text-3xl font-black tracking-tight text-foreground">
+                                ${grandTotal.toFixed(2)}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleConfirmSale} className="space-y-4">
+                            {/* Input de Dinero Recibido */}
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+                                    Dinero Recibido ($) <span className="text-destructive">*</span>
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-muted-foreground">
+                                        $
+                                    </span>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        min="0"
+                                        required
+                                        autoFocus
+                                        value={receivedAmount}
+                                        onChange={(e) => setReceivedAmount(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full rounded-xl border-2 border-primary/30 bg-background py-3 pl-8 pr-4 text-xl font-bold tracking-tight text-foreground focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Botones de sugerencias de billetes / pago exacto */}
+                            <div className="space-y-1.5">
+                                <span className="text-[11px] font-semibold text-muted-foreground">
+                                    Accesos rápidos de efectivo:
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setReceivedAmount(grandTotal.toFixed(2))}
+                                        className="rounded-lg border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:border-primary hover:bg-primary/5 transition-all"
+                                    >
+                                        Exacto (${grandTotal.toFixed(2)})
+                                    </button>
+                                    {[50, 100, 200, 500, 1000].map((bill) => (
+                                        <button
+                                            key={bill}
+                                            type="button"
+                                            onClick={() => setReceivedAmount(String(bill))}
+                                            className="rounded-lg border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 transition-all"
+                                        >
+                                            ${bill}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Tarjeta de Cálculo de Cambio o Faltante */}
+                            {receivedAmount !== '' && (
+                                <div className="animate-in fade-in duration-200">
+                                    {!isUnderpaid ? (
+                                        <div className="rounded-xl border border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/30 p-4 text-center space-y-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                                                Cambio / Vuelto a Entregar
+                                            </span>
+                                            <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                                ${changeDue.toFixed(2)}
+                                            </div>
+                                            <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                                                Recibido: ${parsedReceived.toFixed(2)} — Venta: ${grandTotal.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3.5 text-center space-y-0.5">
+                                            <div className="flex items-center justify-center gap-1.5 text-destructive font-bold text-xs">
+                                                <AlertCircle className="size-4" />
+                                                <span>Dinero insuficiente</span>
+                                            </div>
+                                            <p className="text-xs text-destructive font-medium">
+                                                Faltan ${(grandTotal - parsedReceived).toFixed(2)} para completar el total.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Botones de acción */}
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowPaymentModal(false)}
+                                    className="text-xs font-medium"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isUnderpaid || isSubmitting}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 shadow-sm gap-2"
+                                >
+                                    <CheckCircle2 className="size-4" />
+                                    {isSubmitting ? 'Procesando...' : 'Confirmar y Finalizar Venta'}
                                 </Button>
                             </div>
                         </form>

@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             PriceTypeSeeder::class,
 
             CategorySeeder::class,
-            BrandSeeder::class,
+            // BrandSeeder::class,
 
             UserSeeder::class,
         ]);

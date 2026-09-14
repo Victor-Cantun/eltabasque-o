@@ -11,6 +11,7 @@ use App\Models\ProductPrice;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -55,8 +56,7 @@ beforeEach(function () {
 
     // Producto con precios
     $this->product = Product::create([
-        'sku' => 'ACE-4T-001',
-        'barcode' => '750123456789',
+        'internal_code' => 'ACE-4T-001',
         'name' => 'Aceite 4T 20W50 1L',
         'cost' => 80.00,
         'active' => true,
@@ -418,4 +418,128 @@ test('can register a new mechanic via endpoint', function () {
         'name' => 'Roberto Gómez',
         'active' => true,
     ]);
+});
+
+test('stores received amount and accurately calculates change amount for cash sale', function () {
+    $payload = [
+        'branch_id' => $this->branch1->id,
+        'sale_type' => 'retail',
+        'discount' => 0,
+        'tax' => 0,
+        'received_amount' => 500.00,
+        'items' => [
+            [
+                'product_id' => $this->product->id,
+                'price_type_id' => $this->priceMechanic->id,
+                'quantity' => 2,
+                'unit_price' => 100.00,
+                'discount' => 0,
+            ],
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('sales.store'), $payload);
+
+    $sale = Sale::latest()->first();
+    expect($sale)->not->toBeNull();
+    $response->assertRedirect(route('sales.show', $sale));
+
+    // Total venta: 200, Recibido: 500, Cambio: 300
+    expect((float) $sale->total)->toBe(200.00);
+    expect((float) $sale->received_amount)->toBe(500.00);
+    expect((float) $sale->change_amount)->toBe(300.00);
+
+    // Verificar registro en tabla payments
+    $this->assertDatabaseHas('payments', [
+        'sale_id' => $sale->id,
+        'method' => 'cash',
+        'amount' => 200.00,
+    ]);
+});
+
+test('admin and multi-branch user can view all branches and mechanics', function () {
+    $mechanic1 = Mechanic::create(['name' => 'Mecánico 1', 'active' => true]);
+    $mechanic1->branches()->attach($this->branch1->id);
+
+    $mechanic2 = Mechanic::create(['name' => 'Mecánico 2', 'active' => true]);
+    $mechanic2->branches()->attach($this->branch2->id);
+
+    // Admin request without branch filter
+    $response = $this->actingAs($this->user)->get(route('sales.index'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('sales/index')
+        ->where('isAdmin', true)
+        ->has('branches', 2)
+        ->has('mechanics', 2)
+        ->where('filters.branch_id', '')
+    );
+
+    // Usuario con múltiples sucursales pero no admin
+    $salesViewPerm = Permission::firstOrCreate(['slug' => 'sales.view'], ['name' => 'Ver Ventas']);
+    $sellerRole = Role::firstOrCreate(['slug' => 'seller'], ['name' => 'Vendedor']);
+    $sellerRole->permissions()->syncWithoutDetaching([$salesViewPerm->id]);
+
+    $multiBranchUser = User::factory()->create();
+    $multiBranchUser->roles()->attach($sellerRole);
+    $multiBranchUser->branches()->attach([$this->branch1->id, $this->branch2->id]);
+
+    $responseUser = $this->actingAs($multiBranchUser)->get(route('sales.index'));
+    $responseUser->assertOk();
+    $responseUser->assertInertia(fn ($page) => $page
+        ->component('sales/index')
+        ->where('isAdmin', false)
+        ->has('branches', 2)
+        ->where('filters.branch_id', '')
+    );
+});
+
+test('sales index defaults date filter to today and only displays today sales', function () {
+    $today = Carbon::today()->toDateString();
+    $yesterday = Carbon::yesterday()->toDateString();
+
+    // Venta creada hoy
+    $saleToday = Sale::create([
+        'folio' => 'VEN-TODAY',
+        'branch_id' => $this->branch1->id,
+        'user_id' => $this->user->id,
+        'subtotal' => 100,
+        'total' => 100,
+        'created_at' => Carbon::today()->addHours(10),
+    ]);
+
+    // Venta creada ayer
+    $saleYesterday = Sale::create([
+        'folio' => 'VEN-YESTERDAY',
+        'branch_id' => $this->branch1->id,
+        'user_id' => $this->user->id,
+        'subtotal' => 200,
+        'total' => 200,
+    ]);
+    $saleYesterday->created_at = Carbon::yesterday()->addHours(10);
+    $saleYesterday->save();
+
+    // Visita por defecto sin filtros de fecha
+    $response = $this->actingAs($this->user)->get(route('sales.index'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('sales/index')
+        ->where('filters.date_from', $today)
+        ->where('filters.date_to', $today)
+        ->has('sales.data', 1)
+        ->where('sales.data.0.folio', 'VEN-TODAY')
+    );
+
+    // Visita especificando rango que incluye ayer
+    $responseRange = $this->actingAs($this->user)->get(route('sales.index', [
+        'date_from' => $yesterday,
+        'date_to' => $today,
+    ]));
+    $responseRange->assertOk();
+    $responseRange->assertInertia(fn ($page) => $page
+        ->component('sales/index')
+        ->where('filters.date_from', $yesterday)
+        ->where('filters.date_to', $today)
+        ->has('sales.data', 2)
+    );
 });

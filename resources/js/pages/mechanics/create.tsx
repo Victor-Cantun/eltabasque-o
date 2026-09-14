@@ -16,23 +16,25 @@ export default function Create({ branches = [] }: Props) {
         <>
             <Head title="Nuevo mecánico" />
             <div className="flex flex-1 flex-col gap-6 p-4">
-                {/* Encabezado */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">
-                            Nuevo mecánico
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Registra un nuevo mecánico en el sistema y asígnalo a sus sucursales.
-                        </p>
+                <div className="rounded-xl border ">
+                    {/* Encabezado */}
+                    <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
+                        <div>
+                            <h1 className="text-2xl font-bold">
+                                Nuevo mecánico
+                            </h1>
+                            <p className="text-sm text-white">
+                                Registra un nuevo mecánico en el sistema y asígnalo a sus sucursales.
+                            </p>
+                        </div>
+                        <Link href={`/mechanics`} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+                            ← Regresar
+                        </Link>
                     </div>
-                    <Link href={`/mechanics`} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
-                        ← Regresar
-                    </Link>
-                </div>
-                {/* Formulario */}
-                <div className="max-w-3xl rounded-xl border p-6">
-                    <MechanicForm branches={branches} mode="create" />
+                    {/* Formulario */}
+                    <div className="p-6">
+                        <MechanicForm branches={branches} mode="create" />
+                    </div>
                 </div>
             </div>
         </>

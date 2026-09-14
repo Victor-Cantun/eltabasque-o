@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 export type ProductOption = {
     id: number;
     name: string;
-    sku: string;
-    barcode?: string | null;
+    internal_code: string;
+    original_code?: string | null;
 };
 
 type Props = {
@@ -46,8 +46,8 @@ export default function ProductSearchSelect({
 
         return products.filter((p) => {
             const matchesName = p.name.toLowerCase().includes(query);
-            const matchesSku = p.sku.toLowerCase().includes(query);
-            const matchesBarcode = p.barcode ? p.barcode.toLowerCase().includes(query) : false;
+            const matchesSku = p.internal_code.toLowerCase().includes(query);
+            const matchesBarcode = p.original_code ? p.original_code.toLowerCase().includes(query) : false;
 
             return matchesName || matchesSku || matchesBarcode;
         });
@@ -146,12 +146,12 @@ export default function ProductSearchSelect({
                             {selectedProduct.name}
                         </span>
                         <Badge variant="outline" className="text-[11px] font-mono shrink-0">
-                            SKU: {selectedProduct.sku}
+                            Código interno: {selectedProduct.internal_code}
                         </Badge>
-                        {selectedProduct.barcode && (
+                        {selectedProduct.original_code && (
                             <Badge variant="secondary" className="text-[11px] font-mono shrink-0 gap-1 hidden sm:inline-flex">
                                 <Barcode className="size-3" />
-                                {selectedProduct.barcode}
+                                {selectedProduct.original_code}
                             </Badge>
                         )}
                     </div>
@@ -189,7 +189,7 @@ export default function ProductSearchSelect({
                             placeholder={
                                 selectedProduct
                                     ? `Seleccionado: ${selectedProduct.name} (Escribe para cambiar)`
-                                    : 'Escribe el nombre, SKU o serie del producto...'
+                                    : 'Escribe el nombre, código o serie del producto...'
                             }
                             className={`w-full rounded-md border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary ${
                                 error ? 'border-destructive' : 'border-input'
@@ -233,12 +233,12 @@ export default function ProductSearchSelect({
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                         <span className="font-mono bg-muted/60 px-1.5 py-0.5 rounded text-[11px]">
-                                                            SKU: {product.sku}
+                                                            Código interno: {product.internal_code}
                                                         </span>
-                                                        {product.barcode && (
+                                                        {product.original_code && (
                                                             <span className="font-mono bg-muted/60 px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1">
                                                                 <Barcode className="size-3" />
-                                                                Serie/Cód: {product.barcode}
+                                                                Serie/Cód: {product.original_code}
                                                             </span>
                                                         )}
                                                     </div>
