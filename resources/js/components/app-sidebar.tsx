@@ -17,6 +17,7 @@ import {
 import { dashboard } from '@/routes';
 import sales from '@/routes/sales';
 import inventory from '@/routes/inventory';
+import suppliers from '@/routes/suppliers';
 import branches from '@/routes/branches';
 import mechanics from '@/routes/mechanics';
 import products from '@/routes/products';
@@ -28,6 +29,7 @@ import type { NavItem } from '@/types';
 const dashboardUrl = dashboard()
 const salesUrl = sales.index();
 const inventoryUrl = inventory.index();
+const suppliersUrl = suppliers.index();
 const branchesUrl = branches.index();
 const mechanicsUrl = mechanics.index();
 const productsUrl = products.index();
@@ -55,7 +57,8 @@ export function AppSidebar() {
         : []),
 /*     ...(can(userPermissions, 'inventory-movements.view')
         ? [{title: 'Movimientos',href: '/inventory-movements',icon: Split,}]
-        : []),  */           
+        : []),  */  
+        {title: 'Proveedores',href: suppliersUrl,icon: User,},         
     ...(can(userPermissions, 'branches.view')
         ? [{title: 'Sucursales',href: branchesUrl,icon: House,}]
         : []),

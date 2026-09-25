@@ -9,10 +9,17 @@ type Summary = {
     total_income: number;
 };
 
+type TotalInventory = {
+    branch_id :number;
+    branch_name: string;
+    total:number;
+}
+
 type Props = {
     branch: Branch;
     summary?: Summary;
     loading?: boolean;
+    total_inventory?:TotalInventory;
 };
 
 const COLORS = ['#3b82f6', '#f59e0b']; // refacciones, servicio
@@ -20,7 +27,7 @@ const COLORS = ['#3b82f6', '#f59e0b']; // refacciones, servicio
 const fmt = (n: number) =>
     n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export default function Sumary({ branch, summary, loading }: Props) {
+export default function Sumary({ branch, summary, loading, total_inventory }: Props) {
     const hasData = summary && summary.total_income > 0;
 
     const chartData = summary
@@ -43,6 +50,10 @@ export default function Sumary({ branch, summary, loading }: Props) {
                         <p className="text-xs text-muted-foreground">Total ingresos</p>
                         <p className="text-lg font-bold">${fmt(summary?.total_income ?? 0)}</p>
                     </div>
+                    <div className="rounded-lg bg-muted/40 px-3 py-2 text-center">
+                        <p className="text-xs text-muted-foreground">Total invertido en stock</p>
+                        <p className="text-lg font-bold">${fmt(total_inventory?.total ?? 0)}</p>
+                    </div>                    
                     <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-lg border px-2 py-1.5 text-center">
                             <span

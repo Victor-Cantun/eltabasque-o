@@ -29,6 +29,7 @@ export default function Register({ passwordRules }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
                                 <Input
+                                    className="bg-white text-black"
                                     id="name"
                                     type="text"
                                     required
@@ -47,6 +48,7 @@ export default function Register({ passwordRules }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
                                 <Input
+                                    className="bg-white text-black"
                                     id="email"
                                     type="email"
                                     required
@@ -61,6 +63,7 @@ export default function Register({ passwordRules }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
                                 <PasswordInput
+                                    className="bg-white text-black"
                                     id="password"
                                     required
                                     tabIndex={3}
@@ -77,6 +80,7 @@ export default function Register({ passwordRules }: Props) {
                                     Confirm password
                                 </Label>
                                 <PasswordInput
+                                    className="bg-white text-black"
                                     id="password_confirmation"
                                     required
                                     tabIndex={4}

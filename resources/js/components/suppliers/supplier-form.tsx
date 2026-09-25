@@ -1,51 +1,54 @@
 import { Link, useForm } from '@inertiajs/react';
 
-type Branch = {
-    id?: number;
-    name: string;
-    code: string;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    active: boolean;
-};
+type Supplier = {
+    id:number;
+    business_name:string;
+    contact_name:string;
+    phone:string;
+    email:string;
+    address:string;
+    rfc:string;
+    active:boolean;
+}
 
-type BranchFormProps = {
-    branch?: Branch;
+type SupplierFormProps = {
+    supplier?: Supplier;
     mode?: 'create' | 'edit';
 };
 
-type BranchFormData = {
-    name: string;
-    code: string;
-    address: string;
-    phone: string;
-    email: string;
-    active: boolean;
+type SupplierFormData = {
+    business_name:string;
+    contact_name:string;
+    phone:string;
+    email:string;
+    address:string;
+    rfc:string;
+    active:boolean;
 };
 
-export default function BranchForm({
-    branch,
+export default function SupplierForm({
+    supplier,
     mode = 'create',
-}: BranchFormProps) {
+}: SupplierFormProps) {
 
     const isEdit = mode === 'edit';
 
-    const form = useForm<BranchFormData>({
-        name: branch?.name ?? '',
-        code: branch?.code ?? '',
-        address: branch?.address ?? '',
-        phone: branch?.phone ?? '',
-        email: branch?.email ?? '',
-        active: branch?.active ?? true,
+    const form = useForm<SupplierFormData>({
+        business_name: supplier?.business_name ?? '',
+        contact_name: supplier?.contact_name ?? '',
+        phone: supplier?.phone ?? '',
+        email: supplier?.email ?? '',
+        address: supplier?.address ?? '',
+        rfc: supplier?.rfc ?? '',
+        active: supplier?.active ?? true,
     });
 
     function submit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (isEdit && branch?.id) {
+        if (isEdit && supplier?.id) {
             form.put(
-                `/branches/${branch.id}`,
+                `/suppliers/${supplier.id}`,
                 {
                     preserveScroll: true,
                 },
@@ -55,7 +58,7 @@ export default function BranchForm({
         }
 
         form.post(
-            `/branches`,
+            `/suppliers`,
             {
                 preserveScroll: true,
             },
@@ -63,130 +66,108 @@ export default function BranchForm({
     }
 
     return (
-        <form
-            onSubmit={submit}
-            className="space-y-6"
-        >
+        <form onSubmit={submit} className="space-y-6">
             {/* Información general */}
             <div>
                 <h2 className="text-lg font-semibold">
-                    Información de la sucursal
+                    Información del proveedor
                 </h2>
-
                 <p className="text-sm text-muted-foreground">
                     Introduce los datos principales de la sucursal.
                 </p>
             </div>
-
             {/* Nombre */}
             <div className="space-y-2">
-                <label
-                    htmlFor="name"
-                    className="text-sm font-medium"
-                >
-                    Nombre de la sucursal *
+                <label htmlFor="business_name" className="text-sm font-medium">
+                    Nombre del proveedor *
                 </label>
-
                 <input
-                    id="name"
+                    id="business_name"
                     type="text"
-                    value={form.data.name}
+                    value={form.data.business_name}
                     onChange={(event) =>
                         form.setData(
-                            'name',
+                            'business_name',
                             event.target.value,
                         )
                     }
-                    placeholder="Ej. Sucursal Escárcega"
+                    placeholder="Ej. Italika"
                     maxLength={255}
+                    autoComplete='off'
                     className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                 />
-
-                {form.errors.name && (
+                {form.errors.business_name && (
                     <p className="text-sm text-red-600">
-                        {form.errors.name}
+                        {form.errors.business_name}
                     </p>
                 )}
             </div>
-
-            {/* Código */}
+            {/* RFC */}
             <div className="space-y-2">
-                <label
-                    htmlFor="code"
-                    className="text-sm font-medium"
-                >
-                    Código *
+                <label htmlFor="rfc" className="text-sm font-medium">
+                    RFC
                 </label>
-
                 <input
-                    id="code"
+                    id="rfc"
                     type="text"
-                    value={form.data.code}
+                    value={form.data.rfc}
                     onChange={(event) =>
                         form.setData(
-                            'code',
+                            'rfc',
                             event.target.value.toUpperCase(),
                         )
                     }
-                    placeholder="Ej. ESC"
+                    placeholder="Ej. JUPRR2912G2"
                     maxLength={20}
                     className="w-full rounded-md border px-3 py-2 uppercase outline-none focus:ring-2 focus:ring-primary"
                 />
-
-                <p className="text-xs text-muted-foreground">
-                    Código único para identificar la sucursal.
-                </p>
-
-                {form.errors.code && (
+                {form.errors.rfc && (
                     <p className="text-sm text-red-600">
-                        {form.errors.code}
+                        {form.errors.rfc}
                     </p>
                 )}
-            </div>
-
-            {/* Dirección */}
+            </div>             
+            {/* Contácto */}
             <div className="space-y-2">
-                <label
-                    htmlFor="address"
-                    className="text-sm font-medium"
-                >
-                    Dirección
+                <label htmlFor="contact_name" className="text-sm font-medium">
+                    Nombre del contácto
                 </label>
-
-                <textarea
-                    id="address"
-                    value={form.data.address}
+                <input
+                    id="contact_name"
+                    type="text"
+                    value={form.data.contact_name}
                     onChange={(event) =>
                         form.setData(
-                            'address',
+                            'contact_name',
                             event.target.value,
                         )
                     }
-                    placeholder="Dirección de la sucursal"
-                    rows={3}
-                    maxLength={255}
-                    className="w-full resize-none rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Ej. Juan Perez"
+                    maxLength={100}
+                    autoComplete='off'
+                    className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                 />
 
-                {form.errors.address && (
+                <p className="text-xs text-muted-foreground">
+                    Nombre del contácto del proveedor.
+                </p>
+
+                {form.errors.contact_name && (
                     <p className="text-sm text-red-600">
-                        {form.errors.address}
+                        {form.errors.contact_name}
                     </p>
                 )}
             </div>
 
+
+
             {/* Teléfono y correo */}
             <div className="grid gap-6 md:grid-cols-2">
-
                 {/* Teléfono */}
                 <div className="space-y-2">
-                    <label
-                        htmlFor="phone"
-                        className="text-sm font-medium"
-                    >
+                    <label htmlFor="phone" className="text-sm font-medium">
                         Teléfono
                     </label>
-
                     <input
                         id="phone"
                         type="tel"
@@ -199,6 +180,7 @@ export default function BranchForm({
                         }
                         placeholder="Ej. 9821234567"
                         maxLength={30}
+                        autoComplete='off'
                         className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                     />
 
@@ -211,10 +193,7 @@ export default function BranchForm({
 
                 {/* Email */}
                 <div className="space-y-2">
-                    <label
-                        htmlFor="email"
-                        className="text-sm font-medium"
-                    >
+                    <label htmlFor="email" className="text-sm font-medium">
                         Correo electrónico
                     </label>
 
@@ -228,8 +207,9 @@ export default function BranchForm({
                                 event.target.value,
                             )
                         }
-                        placeholder="sucursal@empresa.com"
+                        placeholder="proveedor@empresa.com"
                         maxLength={255}
+                        autoComplete='off'
                         className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                     />
 
@@ -242,55 +222,37 @@ export default function BranchForm({
 
             </div>
 
-            {/* Estado */}
-            <div className="rounded-lg border p-4">
-
-                <div className="flex items-center gap-3">
-
-                    <input
-                        id="active"
-                        type="checkbox"
-                        checked={form.data.active}
-                        onChange={(event) =>
-                            form.setData(
-                                'active',
-                                event.target.checked,
-                            )
-                        }
-                        className="h-4 w-4 rounded border"
-                    />
-
-                    <div>
-                        <label
-                            htmlFor="active"
-                            className="text-sm font-medium"
-                        >
-                            Sucursal activa
-                        </label>
-
-                        <p className="text-xs text-muted-foreground">
-                            La sucursal podrá utilizarse
-                            inmediatamente en el sistema.
-                        </p>
-                    </div>
-
-                </div>
-
-                {form.errors.active && (
-                    <p className="mt-2 text-sm text-red-600">
-                        {form.errors.active}
+  
+            {/* Dirección */}
+            <div className="space-y-2">
+                <label htmlFor="address" className="text-sm font-medium">
+                    Dirección
+                </label>
+                <textarea
+                    id="address"
+                    value={form.data.address}
+                    onChange={(event) =>
+                        form.setData(
+                            'address',
+                            event.target.value,
+                        )
+                    }
+                    placeholder="Dirección del proveedor"
+                    rows={3}
+                    maxLength={255}
+                    className="w-full resize-none rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
+                />
+                {form.errors.address && (
+                    <p className="text-sm text-red-600">
+                        {form.errors.address}
                     </p>
                 )}
-
-            </div>
+            </div>                     
 
             {/* Botones */}
             <div className="flex justify-end gap-3 border-t pt-6">
 
-                <Link
-                    href={`/branches`}
-                    className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-                >
+                <Link href={`/suppliers`} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
                     Cancelar
                 </Link>
 
@@ -302,8 +264,8 @@ export default function BranchForm({
                     {form.processing
                         ? 'Guardando...'
                         : isEdit
-                            ? 'Actualizar sucursal'
-                            : 'Guardar sucursal'}
+                            ? 'Actualizar proveedor'
+                            : 'Guardar proveedor'}
                 </button>
 
             </div>

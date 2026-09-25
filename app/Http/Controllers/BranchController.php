@@ -62,8 +62,8 @@ class BranchController extends Controller
     public function store(StoreBranchRequest $request): RedirectResponse
     {
         $this->branchService->create($request->validated());
-
-        return to_route('branches.index')->with('success', 'Sucursal creada correctamente');
+        return to_route('branches.index')
+        ->with('success', 'Sucursal creada correctamente');
     }
 
     /**

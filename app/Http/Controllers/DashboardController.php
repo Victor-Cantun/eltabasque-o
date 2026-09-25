@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-
+use App\Models\Inventory;
 class DashboardController extends Controller
 {
     public function index(Request $request): Response
@@ -59,6 +59,21 @@ class DashboardController extends Controller
             ->map(fn ($group) => $group->take($perBranchLimit)->values());
     }
 
+    private function buildTotalInventory( Collection $branchIds): Collection
+    {
+        return Inventory::query()
+        ->join('products','products.id','=','inventories.product_id')
+        ->join('branches', 'branches.id', '=', 'inventories.branch_id')
+        ->whereIn('inventories.branch_id', $branchIds)
+        ->select(
+            'inventories.branch_id',
+            'branches.name as branch_name',
+            DB::raw('SUM(inventories.stock * products.cost) as total')
+        )
+        ->groupBy('inventories.branch_id','branches.name')
+        ->get();
+    }
+
     public function data(Request $request)
     {
         $validated = $request->validate([
@@ -77,9 +92,12 @@ class DashboardController extends Controller
             'mechanics_report' => $this->buildMechanicsReport($branchIds, $dateFrom, $dateTo),
             'top_products' => $this->buildTopProducts($branchIds, $dateFrom, $dateTo),
             'low_stock_products' => $this->buildLowStockProducts($branchIds),
-            // 'income_trend' => $this->buildIncomeTrend($branchIds, $dateFrom, $dateTo),
+            
+            'total_inventory' => $this->buildTotalInventory($branchIds),
         ]);
     }
+
+
 
     private function buildBranchesSummary(Collection $branches, Collection $branchIds, ?string $dateFrom, ?string $dateTo): Collection
     {

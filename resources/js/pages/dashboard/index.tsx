@@ -47,12 +47,18 @@ type IncomeTrendPoint = {
     total_income: number | string;
 };
 
+type TotalInventory = {
+    branch_id :number;
+    branch_name: string;
+    total:number;
+}
 type DashboardData = {
     branches_summary: BranchSummary[];
     mechanics_report: Record<string, MechanicReportItem[]>;
     top_products: Record<string, TopProduct[]>;
     low_stock_products: Record<string, LowStockProduct[]>;
     income_trend: IncomeTrendPoint[];
+    total_inventory: TotalInventory[];
 };
 
 type Props = {
@@ -66,7 +72,9 @@ const EMPTY_DATA: DashboardData = {
     mechanics_report: {}, 
     top_products: {}, 
     low_stock_products: {},
-    income_trend: [], };
+    income_trend: [], 
+    total_inventory:[],
+};
 
 const fmt = (n: number) =>
     n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -119,7 +127,7 @@ export default function Dashboard({ branches, filters }: Props) {
             clearTimeout(timeout);
         };
     }, [dateFrom, dateTo]);
-
+console.log("inventario",data.total_inventory);
     return (
         <>
             <Head title="Dashboard" />
@@ -166,14 +174,15 @@ export default function Dashboard({ branches, filters }: Props) {
                     const summary = data.branches_summary.find((s) => s.branch_id === branch.id);
                     const mechanics = data.mechanics_report[String(branch.id)] ?? [];
                     const products = data.top_products[String(branch.id)] ?? [];
-
+                    const total_inventory = data.total_inventory.find((s) => s.branch_id === branch.id);
+                    
                     return (
                         <div key={branch.id} className="rounded-xl border bg-card shadow-sm">
                             <h2 className="rounded-t-lg p-2 text-lg font-bold bg-blue-700 text-white">{branch.name}</h2>
                             <div className="p-2">
                                 <div className="grid gap-4 lg:grid-cols-4">
                                     {/* Ingresos totales + desglose */}
-                                    <Ingresos branch={branch} summary={summary} loading={loading} />
+                                    <Ingresos branch={branch} summary={summary} loading={loading} total_inventory={total_inventory} />
 
                                     {/* Servicios por mecánico */}
                                     <div className="rounded-lg border">

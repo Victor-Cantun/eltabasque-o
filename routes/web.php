@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
@@ -13,7 +13,8 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+//Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/','/login')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
@@ -66,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/inventory-movements', [InventoryMovementController::class, 'store'])
         ->middleware(['permission:inventory-movements.create'])
         ->name('inventory-movements.store');
+    //Proveedores
+    Route::resource('suppliers',SupplierController::class);    
     //Sucursales
     Route::resource('branches', BranchController::class)
         ->middlewareFor('index', 'permission:branches.view')
