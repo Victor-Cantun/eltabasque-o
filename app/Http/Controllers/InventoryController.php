@@ -8,11 +8,10 @@ use App\Models\Inventory;
 use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response as HttpResponse;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+
 class InventoryController extends Controller
 {
     public function __construct(
@@ -92,13 +91,14 @@ class InventoryController extends Controller
             // BOM para que Excel abra bien los acentos
             fwrite($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ['Sucursal', 'Producto', 'SKU', 'Stock', 'Stock mínimo']);
+            fputcsv($handle, ['Sucursal', 'Producto', 'Código interno', 'Código original', 'Stock', 'Stock mínimo']);
 
             foreach ($inventories as $row) {
                 fputcsv($handle, [
                     $row->branch->name,
                     $row->product->name,
-                    $row->product->sku,
+                    $row->product->internal_code,
+                    $row->product->original_code,
                     $row->stock,
                     $row->minimum_stock,
                 ]);
@@ -113,7 +113,7 @@ class InventoryController extends Controller
     public function edit(Inventory $inventory): Response
     {
         return Inertia::render('inventory/edit', [
-            'inventory' => $inventory->load(['branch:id,name', 'product:id,name,sku']),
+            'inventory' => $inventory->load(['branch:id,name', 'product:id,name,internal_code,original_code']),
         ]);
     }
 
@@ -137,7 +137,7 @@ class InventoryController extends Controller
         ?string $minStock,
     ) {
         return Inventory::query()
-            ->with(['branch:id,name', 'product:id,name,sku'])
+            ->with(['branch:id,name', 'product:id,name,internal_code,original_code'])
             ->when(
                 $request->filled('low_stock'),
                 fn ($query) => $query->whereColumn('stock', '<=', 'minimum_stock'),
@@ -148,7 +148,11 @@ class InventoryController extends Controller
             )
             ->when($search, function ($query, $search) {
                 $query->whereHas('product', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+                    $q->where(function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%")
+                            ->orWhere('internal_code', 'like', "%{$search}%")
+                            ->orWhere('original_code', 'like', "%{$search}%");
+                    });
                 });
             })
             ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))

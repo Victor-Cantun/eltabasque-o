@@ -127,7 +127,7 @@ export default function Dashboard({ branches, filters }: Props) {
             clearTimeout(timeout);
         };
     }, [dateFrom, dateTo]);
-console.log("inventario",data.total_inventory);
+
     return (
         <>
             <Head title="Dashboard" />
@@ -174,7 +174,7 @@ console.log("inventario",data.total_inventory);
                     const summary = data.branches_summary.find((s) => s.branch_id === branch.id);
                     const mechanics = data.mechanics_report[String(branch.id)] ?? [];
                     const products = data.top_products[String(branch.id)] ?? [];
-                    const total_inventory = data.total_inventory.find((s) => s.branch_id === branch.id);
+                    const total_inventory = data.total_inventory?.find((s) => s.branch_id === branch.id);
                     
                     return (
                         <div key={branch.id} className="rounded-xl border bg-card shadow-sm">

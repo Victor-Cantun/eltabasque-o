@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleServiceItem;
@@ -12,7 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Inventory;
+
 class DashboardController extends Controller
 {
     public function index(Request $request): Response
@@ -59,19 +60,28 @@ class DashboardController extends Controller
             ->map(fn ($group) => $group->take($perBranchLimit)->values());
     }
 
-    private function buildTotalInventory( Collection $branchIds): Collection
+    private function buildTotalInventory(Collection $branches, Collection $branchIds): Collection
     {
-        return Inventory::query()
-        ->join('products','products.id','=','inventories.product_id')
-        ->join('branches', 'branches.id', '=', 'inventories.branch_id')
-        ->whereIn('inventories.branch_id', $branchIds)
-        ->select(
-            'inventories.branch_id',
-            'branches.name as branch_name',
-            DB::raw('SUM(inventories.stock * products.cost) as total')
-        )
-        ->groupBy('inventories.branch_id','branches.name')
-        ->get();
+        $rows = Inventory::query()
+            ->join('products', 'products.id', '=', 'inventories.product_id')
+            ->whereIn('inventories.branch_id', $branchIds)
+            ->select([
+                'inventories.branch_id',
+                DB::raw('COALESCE(SUM(inventories.stock * products.cost), 0) as total'),
+            ])
+            ->groupBy('inventories.branch_id')
+            ->get()
+            ->keyBy('branch_id');
+
+        return $branches->map(function (Branch $branch) use ($rows) {
+            $row = $rows->get($branch->id);
+
+            return [
+                'branch_id' => $branch->id,
+                'branch_name' => $branch->name,
+                'total' => round((float) ($row->total ?? 0), 2),
+            ];
+        })->values();
     }
 
     public function data(Request $request)
@@ -92,12 +102,9 @@ class DashboardController extends Controller
             'mechanics_report' => $this->buildMechanicsReport($branchIds, $dateFrom, $dateTo),
             'top_products' => $this->buildTopProducts($branchIds, $dateFrom, $dateTo),
             'low_stock_products' => $this->buildLowStockProducts($branchIds),
-            
-            'total_inventory' => $this->buildTotalInventory($branchIds),
+            'total_inventory' => $this->buildTotalInventory($branches, $branchIds),
         ]);
     }
-
-
 
     private function buildBranchesSummary(Collection $branches, Collection $branchIds, ?string $dateFrom, ?string $dateTo): Collection
     {

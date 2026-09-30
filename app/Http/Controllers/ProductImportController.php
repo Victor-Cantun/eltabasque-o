@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Imports\ProductsImport;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -11,7 +13,7 @@ class ProductImportController extends Controller
     public function create()
     {
         return Inertia::render('products/Import', [
-            'branches' => \App\Models\Branch::select('id', 'name')->get(),
+            'branches' => Branch::select('id', 'name')->get(),
         ]);
     }
 
@@ -21,7 +23,7 @@ class ProductImportController extends Controller
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
             'branch_id' => ['required', 'exists:branches,id'],
         ]);
-
+        set_time_limit(300);
         $import = new ProductsImport($request->integer('branch_id'));
         Excel::import($import, $request->file('file'));
 

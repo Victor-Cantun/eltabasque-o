@@ -58,7 +58,7 @@ export function AppSidebar() {
 /*     ...(can(userPermissions, 'inventory-movements.view')
         ? [{title: 'Movimientos',href: '/inventory-movements',icon: Split,}]
         : []),  */  
-        {title: 'Proveedores',href: suppliersUrl,icon: User,},         
+        /* {title: 'Proveedores',href: suppliersUrl,icon: User,},  */        
     ...(can(userPermissions, 'branches.view')
         ? [{title: 'Sucursales',href: branchesUrl,icon: House,}]
         : []),

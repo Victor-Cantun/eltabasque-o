@@ -24,8 +24,8 @@ type Props = {
 
 const COLORS = ['#3b82f6', '#f59e0b']; // refacciones, servicio
 
-const fmt = (n: number) =>
-    n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (n: number | string) =>
+    Number(n ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Sumary({ branch, summary, loading, total_inventory }: Props) {
     const hasData = summary && summary.total_income > 0;

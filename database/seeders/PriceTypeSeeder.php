@@ -14,21 +14,21 @@ class PriceTypeSeeder extends Seeder
     {
         $priceTypes = [
             [
+                'name' => 'Público',
+                'slug' => 'public',
+                'description' => 'Precio de venta al público general',
+                'active' => true,
+            ],
+            [
                 'name' => 'Mayoreo',
                 'slug' => 'wholesale',
                 'description' => 'Precio para clientes mayoristas',
                 'active' => true,
-            ], 
+            ],
             [
                 'name' => 'Mecánico',
                 'slug' => 'mechanic',
                 'description' => 'Precio especial para mecánicos',
-                'active' => true,
-            ],                       
-            [
-                'name' => 'Público',
-                'slug' => 'public',
-                'description' => 'Precio de venta al público general',
                 'active' => true,
             ],
         ];

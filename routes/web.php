@@ -1,5 +1,5 @@
 <?php
-use App\Http\Controllers\SupplierController;
+
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
@@ -10,30 +10,45 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-//Route::inertia('/', 'welcome')->name('home');
-Route::redirect('/','/login')->name('home');
-
+// Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/login')->name('home');
+Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/', function () {
+    $user = auth()->user();
+    if ($user->hasPermission('dashboard.view')) {
+        return redirect()->route('dashboard');
+    }
+    if ($user->hasPermission('sales.view')) {
+        return redirect()->route('sales.index');
+    }
+    abort(403, 'El usuario no tiene módulos disponibles.');
+    })->middleware('auth');
     // Dashboard
-    Route::get('dashboard', [DashboardController::class, 'index'])
-        ->middleware('permission:dashboard.view')
-        ->name('dashboard');
-    Route::get('dashboard/data', [DashboardController::class, 'data'])
-        ->middleware('permission:dashboard.view')
-        ->name('dashboard.data');
-    Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
-        ->middleware('permission:dashboard.view')
-        ->name('dashboard.income-trend');
+    Route::middleware(['permission:dashboard.view'])->group(function () {
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            //->middleware('permission:dashboard.view')
+            ->name('dashboard');
+        Route::get('dashboard/data', [DashboardController::class, 'data'])
+            //->middleware('permission:dashboard.view')
+            ->name('dashboard.data');
+        Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
+            //->middleware('permission:dashboard.view')
+            ->name('dashboard.income-trend');
+    });
+
     // Ventas
     Route::middleware(['permission:sales.view'])->group(function () {
         Route::get('sales', [SaleController::class, 'index'])
             ->name('sales.index');
         Route::get('sales/{sale}', [SaleController::class, 'show'])
             ->name('sales.show');
-    });    
+    });
     Route::middleware(['permission:sales.create'])->group(function () {
         Route::get('sales/create', [SaleController::class, 'create'])
             ->name('sales.create');
@@ -56,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('inventory.update');
     // Exportar productos con bajo stock
     Route::get('inventory/export', [InventoryController::class, 'export'])
-        ->name('inventory.export');     
+        ->name('inventory.export');
     // Movimientos de inventario
     Route::get('/inventory-movements', [InventoryMovementController::class, 'index'])
         ->middleware(['permission:inventory-movements.view'])
@@ -67,27 +82,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/inventory-movements', [InventoryMovementController::class, 'store'])
         ->middleware(['permission:inventory-movements.create'])
         ->name('inventory-movements.store');
-    //Proveedores
-    Route::resource('suppliers',SupplierController::class);    
-    //Sucursales
+    // Proveedores
+    Route::resource('suppliers', SupplierController::class);
+    // Sucursales
     Route::resource('branches', BranchController::class)
         ->middlewareFor('index', 'permission:branches.view')
         ->middlewareFor('create', 'permission:branches.create')
         ->middlewareFor('store', 'permission:branches.create')
         ->middlewareFor('edit', 'permission:branches.edit')
         ->middlewareFor('update', 'permission:branches.update')
-        ->middlewareFor('destroy', 'permission:branches.delete');    
+        ->middlewareFor('destroy', 'permission:branches.delete');
     Route::post('branches/{branch}/toggle-active', [BranchController::class, 'toggleActive'])
         ->middleware('permission:branches.edit')
         ->name('branches.toggle-active');
-    //Mecánicos
+    // Mecánicos
     Route::resource('mechanics', MechanicController::class)
         ->middlewareFor('index', 'permission:mechanics.view')
         ->middlewareFor('create', 'permission:mechanics.create')
         ->middlewareFor('store', 'permission:mechanics.create')
         ->middlewareFor('edit', 'permission:mechanics.edit')
         ->middlewareFor('update', 'permission:mechanics.update')
-        ->middlewareFor('destroy', 'permission:mechanics.delete');    
+        ->middlewareFor('destroy', 'permission:mechanics.delete');
     Route::post('mechanics/{mechanic}/toggle-active', [MechanicController::class, 'toggleActive'])
         ->middleware('permission:mechanics.edit')
         ->name('mechanics.toggle-active');
@@ -100,12 +115,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('update', 'permission:products.update')
         ->middlewareFor('destroy', 'permission:products.delete');
     // Importar productos
-    Route::get('products/import', [ProductImportController::class, 'create'])
-        ->middleware('permission:products.create')
+    //Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+    //Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+   /*  Route::middleware(['permission:products.import'])->group(function () 
+    {
+        Route::get('products/import', [ProductImportController::class, 'create'])
+            ->name('products.import');
+        Route::post('products/import', [ProductImportController::class, 'store'])
+            ->name('products.import.store');
+    }); */
+   /*  Route::get('products/import', [ProductImportController::class, 'create'])
+        ->middleware('permission:products.import')
         ->name('products.import');
     Route::post('products/import', [ProductImportController::class, 'store'])
-        ->middleware('permission:products.create')
-        ->name('products.import.store');        
+        ->middleware('permission:products.import')
+        ->name('products.import.store'); */
     // Usuarios
     Route::resource('users', UserController::class)
         ->middlewareFor('index', 'permission:users.view')
@@ -116,7 +140,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('destroy', 'permission:users.delete');
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
         ->middleware('permission:users.edit')
-        ->name('users.toggle-status');        
+        ->name('users.toggle-status');
     // Roles
     Route::resource('roles', RoleController::class)
         ->middlewareFor('index', 'permission:roles.view')
