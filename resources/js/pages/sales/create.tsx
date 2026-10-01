@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
-import { Search, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Building2, Tag, AlertCircle, CheckCircle2, User as UserIcon, Wrench, X, Banknote, DollarSign } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Building2, Tag, AlertCircle, CheckCircle2, User as UserIcon, Wrench, X, Banknote, DollarSign, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -89,15 +89,17 @@ type Props = {
     products: Product[];
     customers: Customer[];
     mechanics: Mechanic[];
+    categories?: Category[];
 };
 
 export default function Create({
     branches,
     selectedBranchId,
     priceTypes,
-    products,
+    products: initialProducts = [],
     customers,
     mechanics: initialMechanics = [],
+    categories: initialCategories = [],
 }: Props) {
     const [currentBranchId, setCurrentBranchId] = useState<number>(selectedBranchId);
     const [mechanicsList, setMechanicsList] = useState<Mechanic[]>(initialMechanics);
@@ -107,6 +109,10 @@ export default function Create({
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
     const [globalDiscount, setGlobalDiscount] = useState<number>(0);
     const [taxRate, setTaxRate] = useState<number>(0);
+
+    const [productsList, setProductsList] = useState<Product[]>(initialProducts);
+    const [isSearching, setIsSearching] = useState(false);
+    const isFirstRender = useRef(true);
 
     // Modal para agregar Servicio / Mano de Obra
     const [showServiceModal, setShowServiceModal] = useState(false);
@@ -147,31 +153,64 @@ export default function Create({
 
     const branchMechanics = getMechanicsForBranch(mechanicsList, currentBranchId);
 
-    // Obtenemos categorías únicas de la lista de productos
+    // Obtenemos categorías de los props o únicas de la lista de productos
     const categories = useMemo(() => {
+        if (initialCategories && initialCategories.length > 0) {
+            return initialCategories;
+        }
         const map = new Map<number, Category>();
-        products.forEach((p) => {
+        productsList.forEach((p) => {
             if (p.category) map.set(p.category.id, p.category);
         });
         return Array.from(map.values());
-    }, [products]);
+    }, [initialCategories, productsList]);
 
-    // Filtrar productos según búsqueda y categoría
-    const filteredProducts = useMemo(() => {
-        return products.filter((p) => {
-            const query = searchQuery.toLowerCase();
-            const matchesSearch =
-                p.name.toLowerCase().includes(query) ||
-                p.internal_code.toLowerCase().includes(query) ||
-                (p.original_code && p.original_code.toLowerCase().includes(query));
+    // Búsqueda dinámica con debounce hacia el backend (máximo 50 coincidencias)
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
 
-            const matchesCategory = selectedCategoryId
-                ? String(p.category?.id) === selectedCategoryId
-                : true;
+        const controller = new AbortController();
+        const timer = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const params = new URLSearchParams();
+                if (searchQuery.trim()) {
+                    params.set('query', searchQuery.trim());
+                }
+                if (selectedCategoryId) {
+                    params.set('category_id', selectedCategoryId);
+                }
 
-            return matchesSearch && matchesCategory;
-        });
-    }, [products, searchQuery, selectedCategoryId]);
+                const res = await fetch(`/sales/products/search?${params.toString()}`, {
+                    signal: controller.signal,
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                });
+
+                if (res.ok) {
+                    const data: Product[] = await res.json();
+                    setProductsList(data);
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error al buscar productos:', error);
+                }
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [searchQuery, selectedCategoryId]);
+
+    const filteredProducts = productsList;
 
     // Crear mecánico rápido si no existe
     const handleCreateQuickMechanic = async (e: React.FormEvent) => {
@@ -487,9 +526,21 @@ export default function Create({
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder="Buscar refacción por código o nombre..."
-                                        className="w-full rounded-lg border bg-card py-2.5 pl-10 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full rounded-lg border bg-card py-2.5 pl-10 pr-10 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                         autoFocus
                                     />
+                                    {isSearching ? (
+                                        <Loader2 className="absolute right-3 top-3 size-4 animate-spin text-primary" />
+                                    ) : searchQuery ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                                            title="Limpiar búsqueda"
+                                        >
+                                            <X className="size-4" />
+                                        </button>
+                                    ) : null}
                                 </div>
 
                                 <Button
@@ -529,6 +580,20 @@ export default function Create({
                                         {cat.name}
                                     </button>
                                 ))}
+                            </div>
+
+                            {/* Indicador de resultados */}
+                            <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                                <span>
+                                    {isSearching
+                                        ? 'Buscando productos...'
+                                        : `Mostrando ${filteredProducts.length} producto${filteredProducts.length === 1 ? '' : 's'} (máximo 50)`}
+                                </span>
+                                {searchQuery.trim() && (
+                                    <span className="italic">
+                                        Filtro: &quot;{searchQuery.trim()}&quot;
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -601,7 +666,9 @@ export default function Create({
 
                             {filteredProducts.length === 0 && (
                                 <div className="col-span-full py-12 text-center text-muted-foreground">
-                                    No se encontraron productos que coincidan con la búsqueda.
+                                    {isSearching
+                                        ? 'Buscando coincidencias...'
+                                        : 'No se encontraron productos que coincidan con la búsqueda.'}
                                 </div>
                             )}
                         </div>

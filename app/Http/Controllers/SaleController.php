@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Sale\CancelSaleRequest;
 use App\Http\Requests\Sale\StoreSaleRequest;
 use App\Models\Branch;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Mechanic;
 use App\Models\PriceType;
@@ -13,6 +14,7 @@ use App\Models\Sale;
 use App\Models\SaleServiceItem;
 use App\Services\SaleService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -172,13 +174,18 @@ class SaleController extends Controller
         $products = Product::query()
             ->where('active', true)
             ->with([
-                // 'category:id,name',
-                // 'brand:id,name',
+                'category:id,name',
                 'prices.priceType:id,name,slug',
                 'inventories',
             ])
             ->orderBy('name')
+            ->limit(50)
             ->get();
+
+        $categories = Category::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         // $customers = Customer::query()
         //    ->orderBy('name')
@@ -195,9 +202,39 @@ class SaleController extends Controller
             'selectedBranchId' => (int) $defaultBranchId,
             'priceTypes' => $priceTypes,
             'products' => $products,
+            'categories' => $categories,
             // 'customers' => $customers,
             'mechanics' => $mechanics,
         ]);
+    }
+
+    public function searchProducts(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->input('query', $request->input('search', '')));
+        $categoryId = $request->input('category_id');
+
+        $products = Product::query()
+            ->where('active', true)
+            ->when($query !== '', function ($q) use ($query) {
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('name', 'like', "%{$query}%")
+                        ->orWhere('internal_code', 'like', "%{$query}%")
+                        ->orWhere('original_code', 'like', "%{$query}%");
+                });
+            })
+            ->when($categoryId, function ($q, $categoryId) {
+                $q->where('category_id', $categoryId);
+            })
+            ->with([
+                'category:id,name',
+                'prices.priceType:id,name,slug',
+                'inventories',
+            ])
+            ->orderBy('name')
+            ->limit(50)
+            ->get();
+
+        return response()->json($products);
     }
 
     public function store(StoreSaleRequest $request, SaleService $saleService): RedirectResponse

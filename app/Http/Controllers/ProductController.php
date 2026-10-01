@@ -35,31 +35,47 @@ class ProductController extends Controller
         $branchId = $request->input('branch_id');
         // Vendedor: forzado a su sucursal
         // Non-admins can only see their assigned branch
-        if (! $isAdmin && ! empty($userBranchIds)) {
-            if (! $branchId || ! in_array((int) $branchId, $userBranchIds)) {
+        if (!$isAdmin && !empty($userBranchIds)) {
+            if (!$branchId || !in_array((int) $branchId, $userBranchIds)) {
                 $branchId = (string) $userBranchIds[0];
             }
         }
 
         $products = Product::query()
             ->select([
-                'id', 'internal_code', 'original_code', 'name',
-                'description', 'image', 'cost', 'active', 'created_at',
+                'id',
+                'internal_code',
+                'original_code',
+                'name',
+                'description',
+                'image',
+                'cost',
+                'active',
+                'created_at',
             ])
             ->with(['prices.priceType'])
-            ->withSum(['inventories as stock' => function ($query) use ($branchId, $isAdmin, $userBranchIds) {
-                if ($branchId) {
-                    $query->where('branch_id', $branchId);
-                } elseif (! $isAdmin) {
-                    $query->whereIn('branch_id', $userBranchIds);
+            ->withSum([
+                'inventories as stock' => function ($query) use ($branchId, $isAdmin, $userBranchIds) {
+                    if ($branchId) {
+                        $query->where('branch_id', $branchId);
+                    } elseif (!$isAdmin) {
+                        $query->whereIn('branch_id', $userBranchIds);
+                    }
+                    // admin sin branchId => suma stock de TODAS las sucursales
                 }
-                // admin sin branchId => suma stock de TODAS las sucursales
-            }], 'stock')
+            ], 'stock')
             ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('internal_code', 'like', "%{$search}%")
-                        ->orWhere('original_code', 'like', "%{$search}%");
+                /*                 $query->where(function ($q) use ($search) {
+                                    $q->where('name', 'like', "%{$search}%")
+                                        ->orWhere('internal_code', 'like', "%{$search}%")
+                                        ->orWhere('original_code', 'like', "%{$search}%");
+                                }); */
+                $term = '%' . mb_strtolower(trim($search)) . '%';
+
+                $query->where(function ($q) use ($term) {
+                    $q->whereRaw('LOWER(name) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(internal_code) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(original_code) LIKE ?', [$term]);
                 });
             })
             ->when($active !== null && $active !== '', function ($query) use ($active) {
@@ -170,10 +186,11 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProductRequest $request,
+    public function update(
+        UpdateProductRequest $request,
         Product $product,
-        ProductService $productService)
-    {
+        ProductService $productService
+    ) {
         $productService->update(
             $product,
             $request->validated()

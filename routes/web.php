@@ -16,29 +16,46 @@ use Illuminate\Support\Facades\Route;
 
 // Route::inertia('/', 'welcome')->name('home');
 Route::redirect('/', '/login')->name('home');
-Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+// Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+// Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', function () {
-    $user = auth()->user();
-    if ($user->hasPermission('dashboard.view')) {
-        return redirect()->route('dashboard');
-    }
-    if ($user->hasPermission('sales.view')) {
-        return redirect()->route('sales.index');
-    }
-    abort(403, 'El usuario no tiene módulos disponibles.');
-    })->middleware('auth');
+    Route::inertia('/', 'start')->name('start');
+    /*     Route::middleware(['permission:products.create'])->group(function ()
+        {
+            Route::get('products/import', [ProductImportController::class, 'create'])
+                ->name('products.import');
+            Route::post('products/import', [ProductImportController::class, 'store'])
+                ->name('products.import.store');
+        }); */
+    /* Route::get('products/import', function () {
+    return 'ENTRÓ A PRODUCTS IMPORT';
+    })->middleware(['auth', 'verified', 'permission:products.create']); */
+
+    Route::get('products/import', [ProductImportController::class, 'create'])
+        ->middleware(['auth', 'verified', 'permission:products.create'])
+        ->name('products.import');
+
+    /*  Route::get('/', function () {
+     $user = auth()->user();
+      if ($user->hasPermission('dashboard.view')) {
+         return redirect()->route('dashboard');
+     }
+     if ($user->hasPermission('sales.view')) {
+         return redirect()->route('sales.index');
+     }
+     abort(403, 'El usuario no tiene módulos disponibles.');
+     })->middleware('auth'); */
+
     // Dashboard
     Route::middleware(['permission:dashboard.view'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])
-            //->middleware('permission:dashboard.view')
+            // ->middleware('permission:dashboard.view')
             ->name('dashboard');
         Route::get('dashboard/data', [DashboardController::class, 'data'])
-            //->middleware('permission:dashboard.view')
+            // ->middleware('permission:dashboard.view')
             ->name('dashboard.data');
         Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
-            //->middleware('permission:dashboard.view')
+            // ->middleware('permission:dashboard.view')
             ->name('dashboard.income-trend');
     });
 
@@ -46,14 +63,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['permission:sales.view'])->group(function () {
         Route::get('sales', [SaleController::class, 'index'])
             ->name('sales.index');
-        Route::get('sales/{sale}', [SaleController::class, 'show'])
-            ->name('sales.show');
     });
     Route::middleware(['permission:sales.create'])->group(function () {
         Route::get('sales/create', [SaleController::class, 'create'])
             ->name('sales.create');
+        Route::get('sales/products/search', [SaleController::class, 'searchProducts'])
+            ->name('sales.products.search');
         Route::post('sales', [SaleController::class, 'store'])
             ->name('sales.store');
+    });
+    Route::middleware(['permission:sales.view'])->group(function () {
+        Route::get('sales/{sale}', [SaleController::class, 'show'])
+            ->name('sales.show');
     });
     Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])
         ->middleware(['permission:sales.cancel'])
@@ -64,7 +85,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('inventory.index');
         Route::get('inventory/{inventory}/edit', [InventoryController::class, 'edit'])
             ->name('inventory.edit');
-
     });
     Route::put('inventory/{inventory}', [InventoryController::class, 'update'])
         ->middleware('permission:inventory.edit-minimum-stock')
@@ -115,21 +135,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('update', 'permission:products.update')
         ->middlewareFor('destroy', 'permission:products.delete');
     // Importar productos
-    //Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-    //Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
-   /*  Route::middleware(['permission:products.import'])->group(function () 
-    {
-        Route::get('products/import', [ProductImportController::class, 'create'])
-            ->name('products.import');
-        Route::post('products/import', [ProductImportController::class, 'store'])
-            ->name('products.import.store');
-    }); */
-   /*  Route::get('products/import', [ProductImportController::class, 'create'])
-        ->middleware('permission:products.import')
-        ->name('products.import');
-    Route::post('products/import', [ProductImportController::class, 'store'])
-        ->middleware('permission:products.import')
-        ->name('products.import.store'); */
+    // Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+    // Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+
+    /*  Route::get('products/import', [ProductImportController::class, 'create'])
+         ->middleware('permission:products.import')
+         ->name('products.import');
+     Route::post('products/import', [ProductImportController::class, 'store'])
+         ->middleware('permission:products.import')
+         ->name('products.import.store'); */
     // Usuarios
     Route::resource('users', UserController::class)
         ->middlewareFor('index', 'permission:users.view')
