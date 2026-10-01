@@ -64,19 +64,20 @@ class ProductController extends Controller
                     // admin sin branchId => suma stock de TODAS las sucursales
                 }
             ], 'stock')
+            //version nuueva de busquea
             ->when($search, function ($query, $search) {
-                /*                 $query->where(function ($q) use ($search) {
-                                    $q->where('name', 'like', "%{$search}%")
-                                        ->orWhere('internal_code', 'like', "%{$search}%")
-                                        ->orWhere('original_code', 'like', "%{$search}%");
-                                }); */
-                $term = '%' . mb_strtolower(trim($search)) . '%';
+                $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+                $words = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
 
-                $query->where(function ($q) use ($term) {
-                    $q->whereRaw('LOWER(name) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(internal_code) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(original_code) LIKE ?', [$term]);
-                });
+                foreach ($words as $word) {
+                    $term = '%' . addcslashes($word, '%_\\') . '%';
+
+                    $query->where(function ($q) use ($term, $operator) {
+                        $q->where('name', $operator, $term)
+                            ->orWhere('internal_code', $operator, $term)
+                            ->orWhere('original_code', $operator, $term);
+                    });
+                }
             })
             ->when($active !== null && $active !== '', function ($query) use ($active) {
                 $query->where('active', (bool) $active);
