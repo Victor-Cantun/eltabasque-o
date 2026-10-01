@@ -232,9 +232,9 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3">${getPrice(product.prices, 1)}</td>
-                                        <td className="px-4 py-3">${getPrice(product.prices, 2)}</td>
                                         <td className="px-4 py-3">${getPrice(product.prices, 3)}</td>
+                                        <td className="px-4 py-3">${getPrice(product.prices, 2)}</td>
+                                        <td className="px-4 py-3">${getPrice(product.prices, 1)}</td>
                                         <td className="px-4 py-3">${Number(product.cost).toFixed(2)}</td>
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-3">

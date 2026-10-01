@@ -132,7 +132,7 @@ export default function Modal({selectedProduct,isAdmin,branchId, onClose }:Props
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio público</p>
-                                        <p className="mt-0.5 text-base font-bold text-primary">${getPrice(selectedProduct.prices, 3)}</p>
+                                        <p className="mt-0.5 text-base font-bold text-primary">${getPrice(selectedProduct.prices, 1)}</p>
                                     </div>
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio mecánico</p>
@@ -140,7 +140,7 @@ export default function Modal({selectedProduct,isAdmin,branchId, onClose }:Props
                                     </div>
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio mayoreo</p>
-                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 1)}</p>
+                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 3)}</p>
                                     </div>
 
                                 </div>
