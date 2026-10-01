@@ -406,10 +406,20 @@ export default function Create({
         setCurrentBranchId(newBranchId);
     };
 
+    //metodo de pago
+    type PaymentMethod = 'cash' | 'transfer' | 'card';
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+    const [paymentReference, setPaymentReference] = useState('');
+
+    const isCash = paymentMethod === 'cash';
+    const parsedReceived = isCash ? parseFloat(receivedAmount) || 0 : grandTotal;
+    const changeDue = isCash ? Math.max(0, parsedReceived - grandTotal) : 0;
+    const isUnderpaid = isCash && parsedReceived < grandTotal;
+
     // Cálculos de cobro y cambio
-    const parsedReceived = parseFloat(receivedAmount) || 0;
-    const changeDue = Math.max(0, parsedReceived - grandTotal);
-    const isUnderpaid = parsedReceived < grandTotal;
+    //const parsedReceived = parseFloat(receivedAmount) || 0;
+    //const changeDue = Math.max(0, parsedReceived - grandTotal);
+    //const isUnderpaid = parsedReceived < grandTotal;
 
     // Abrir cuadro de cobro
     const openPaymentModal = () => {
@@ -418,6 +428,8 @@ export default function Create({
             return;
         }
         setReceivedAmount('');
+        setPaymentMethod('cash');
+        setPaymentReference('');
         setShowPaymentModal(true);
     };
 
@@ -434,12 +446,16 @@ export default function Create({
         setIsSubmitting(true);
 
         const payload = {
+            payment_method: paymentMethod,
+            payment_reference: isCash ? null: paymentReference.trim()||null,
+            received_amount: parsedReceived,
+            //payment_reference: paymentMethod === 'cash' ? null : paymentReference || null,
             branch_id: currentBranchId,
             customer_id: selectedCustomerId ? Number(selectedCustomerId) : null,
             sale_type: 'retail',
             discount: globalDiscount,
             tax: taxAmount,
-            received_amount: parsedReceived,
+            //received_amount: parsedReceived,
             items: cart
             .filter((item)=>item.item_type === 'product') 
             .map((item) => ({
@@ -465,6 +481,7 @@ export default function Create({
             onSuccess:()=>{
                 setShowPaymentModal(false);
                 setCart([]);
+                setPaymentReference('');
             },
             onError:(errors)=>{
                 console.error('Errores al guardar la venta:',errors);
@@ -1057,32 +1074,89 @@ export default function Create({
                             </div>
                         </div>
 
-                        <form onSubmit={handleConfirmSale} className="space-y-4">
-                            {/* Input de Dinero Recibido */}
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
-                                    Dinero Recibido ($) <span className="text-destructive">*</span>
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-muted-foreground">
-                                        $
-                                    </span>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        min="0"
-                                        required
-                                        autoFocus
-                                        value={receivedAmount}
-                                        onChange={(e) => setReceivedAmount(e.target.value)}
-                                        placeholder="0.00"
-                                        className="w-full rounded-xl border-2 border-primary/30 bg-background py-3 pl-8 pr-4 text-xl font-bold tracking-tight text-foreground focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                    />
-                                </div>
-                            </div>
+
+
+ <form onSubmit={handleConfirmSale} className="space-y-4">
+{/* Selector de método de pago */}
+<div className="space-y-1.5">
+    <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+        Método de pago
+    </span>
+    <div className="grid grid-cols-3 gap-2">
+        {([
+            ['cash', 'Efectivo'],
+            ['transfer', 'Transferencia'],
+            ['card', 'Tarjeta'],
+        ] as const).map(([value, label]) => (
+            <button
+                key={value}
+                type="button"
+                onClick={() => setPaymentMethod(value)}
+                className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${
+                    paymentMethod === value
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'bg-background text-foreground hover:bg-muted'
+                }`}
+            >
+                {label}
+            </button>
+        ))}
+    </div>
+</div>
+
+{isCash ? (
+    <>
+        {/* Dinero recibido */}
+        <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+                Dinero Recibido ($) <span className="text-destructive">*</span>
+            </label>
+            <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-muted-foreground">$</span>
+                <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    required
+                    autoFocus
+                    value={receivedAmount}
+                    onChange={(e) => setReceivedAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full rounded-xl border-2 border-primary/30 bg-background py-3 pl-8 pr-4 text-xl font-bold tracking-tight text-foreground focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                />
+            </div>
+        </div>
+
+        {/* Accesos rápidos (tu bloque actual, sin cambios) */}
+        {/* ... */}
+
+        {/* Cambio o faltante (tu bloque actual, sin cambios) */}
+        {/* receivedAmount !== '' && ( ... ) */}
+    </>
+) : (
+    <div>
+        <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5">
+            {paymentMethod === 'transfer'
+                ? 'Referencia / Clave de rastreo (opcional)'
+                : 'Referencia / Últimos 4 dígitos (opcional)'}
+        </label>
+        <input
+            type="text"
+            autoFocus
+            maxLength={255}
+            value={paymentReference}
+            onChange={(e) => setPaymentReference(e.target.value)}
+            placeholder={paymentMethod === 'transfer' ? 'Ej: 123456789' : 'Ej: 4417'}
+            className="w-full rounded-xl border-2 border-primary/30 bg-background px-4 py-3 text-sm font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+        />
+    </div>
+)}
+
+
+                            
 
                             {/* Botones de sugerencias de billetes / pago exacto */}
-                            <div className="space-y-1.5">
+                            {/* <div className="space-y-1.5">
                                 <span className="text-[11px] font-semibold text-muted-foreground">
                                     Accesos rápidos de efectivo:
                                 </span>
@@ -1105,7 +1179,7 @@ export default function Create({
                                         </button>
                                     ))}
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Tarjeta de Cálculo de Cambio o Faltante */}
                             {receivedAmount !== '' && (

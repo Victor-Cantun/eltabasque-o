@@ -24,6 +24,8 @@ class Sale extends Model
         'cancelled_at',
         'cancelled_by',
         'cancellation_reason',
+
+        'payment_method',
     ];
 
     protected $casts = [
@@ -36,6 +38,7 @@ class Sale extends Model
         'received_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'cancelled_at' => 'datetime',
+        'payment_method' => \App\Enums\PaymentMethod::class,
     ];
 
     public function branch()

@@ -41,6 +41,14 @@ type SaleItem = {
     };
 };
 
+type Payment = {
+    id: number;
+    sale_id: number;
+    method: string;
+    amount?: string | number;
+    method_label: string;
+};
+
 type Sale = {
     id: number;
     folio: string;
@@ -58,6 +66,7 @@ type Sale = {
     customer?: { id: number; name: string } | null;
     items: SaleItem[];
     serviceItems: SaleServiceItem[];
+    payments: Payment[];
 };
 
 type PaginationLink = {
@@ -285,6 +294,19 @@ export default function Index({
     };
 
     const branchMechanics = getMechanicsForBranch(mechanics, Number(branchId));
+
+    const paymentMethodLabel = (method: string): string => {
+    switch (method) {
+            case 'cash':
+                return 'Efectivo';
+            case 'transfer':
+                return 'Transferencia';
+            case 'card':
+                return 'Tarjeta';
+            default:
+                return method;
+        }
+    };
     
     return (
         <>
@@ -540,9 +562,9 @@ export default function Index({
                 </div>
 
                 {/* Tabla de ventas */}
-                <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                <div className="rounded-xl border bg-card shadow-sm overflow-x-scroll">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-sm ">
                             <thead className="border-b bg-blue-800 text-white text-xs uppercase ">
                                 <tr>
                                     <th className="px-4 py-3 text-left">Folio</th>
@@ -556,6 +578,7 @@ export default function Index({
                                     <th className="px-4 py-3 text-right">Refacciones</th>
                                     <th className="px-4 py-3 text-right">Servicios</th>
                                     <th className="px-4 py-3 text-right">Total</th>
+                                    <th className="px-4 py-3 text-center">Método de pago</th>
                                     <th className="px-4 py-3 text-center">Estado</th>
                                     <th className="px-4 py-3 text-left">Fecha</th>
                                     <th className="px-4 py-3 text-right">Acciones</th>
@@ -586,6 +609,9 @@ export default function Index({
                                         </td>
                                         <td className="px-4 py-3 text-right font-bold text-foreground">
                                             ${Number(sale.total).toFixed(2)}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {sale.payments?.[0]?.method_label ?? '—'}
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             {sale.status === 'completed' ? (

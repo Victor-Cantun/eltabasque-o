@@ -102,6 +102,9 @@ class SaleService
             $receivedAmount = isset($data['received_amount']) ? (float) $data['received_amount'] : null;
             $changeAmount = $receivedAmount !== null ? max(0, $receivedAmount - $total) : 0.00;
 
+            $isCash = $data['payment_method'] === 'cash';
+            $received = $isCash ? (float) $data['received_amount'] : $total;
+
             $sale = Sale::create([
                 'folio' => $folio,
                 'branch_id' => $branchId,
@@ -114,16 +117,20 @@ class SaleService
                 'total' => $total,
                 'service_total' => $serviceTotal,
                 'products_total' => $productsTotal,
-                'received_amount' => $receivedAmount,
-                'change_amount' => $changeAmount,
+                //'received_amount' => $receivedAmount,
+                //'change_amount' => $changeAmount,
+                'received_amount' => $received,
+                'change_amount'   => max(0, $received - $total),
                 'status' => 'completed',
             ]);
 
             // Registrar pago en efectivo por defecto
             $sale->payments()->create([
                 'user_id' => $user->id,
-                'method' => 'cash',
+                //'method' => 'cash',
+                'method'=> $data['payment_method'],
                 'amount' => $total,
+                'reference' => $data['payment_reference'] ?? null,
                 'paid_at' => now(),
             ]);
 

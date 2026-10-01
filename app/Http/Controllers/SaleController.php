@@ -114,6 +114,7 @@ class SaleController extends Controller
                 // 'customer:id,name',
                 'items.product:id,name,internal_code,original_code',
                 'serviceItems.mechanic:id,name',
+                'payments:id,sale_id,method,amount',
             ])
             ->latest()
             ->paginate(15)

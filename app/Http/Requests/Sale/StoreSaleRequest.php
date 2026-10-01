@@ -5,6 +5,9 @@ namespace App\Http\Requests\Sale;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+use App\Enums\PaymentMethod;
+use Illuminate\Validation\Rule;
+
 class StoreSaleRequest extends FormRequest
 {
     /**
@@ -28,6 +31,10 @@ class StoreSaleRequest extends FormRequest
             'sale_type' => ['nullable', 'string', 'max:20'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'tax' => ['nullable', 'numeric', 'min:0'],
+            //'received_amount' => ['nullable', 'numeric', 'min:0'],
+
+            'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
+            'payment_reference' => ['nullable', 'string', 'max:255'], // folio de transferencia / últimos 4 de tarjeta
             'received_amount' => ['nullable', 'numeric', 'min:0'],
 
             // 'items' => ['required', 'array', 'min:1'], //Se requiere al menos un producto
@@ -50,6 +57,8 @@ class StoreSaleRequest extends FormRequest
             'services.*.quantity' => ['required', 'numeric', 'gt:0'],
             'services.*.unit_price' => ['required', 'numeric', 'gte:0'],
             'services.*.discount' => ['nullable', 'numeric', 'min:0'],
+
+
         ];
     }
 
