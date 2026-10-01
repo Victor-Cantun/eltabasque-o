@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 // Route::inertia('/', 'welcome')->name('home');
 Route::redirect('/', '/login')->name('home');
-// Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-// Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/', 'start')->name('start');
     /*     Route::middleware(['permission:products.create'])->group(function ()

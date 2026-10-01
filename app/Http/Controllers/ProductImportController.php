@@ -12,10 +12,10 @@ class ProductImportController extends Controller
 {
     public function create()
     {
-        /* return Inertia::render('products/Import', [
+        return Inertia::render('products/Import', [
             'branches' => Branch::select('id', 'name')->get(),
-        ]); */
-        return 'ENTRÓ AL CONTROLLER';
+        ]);
+        //return 'ENTRÓ AL CONTROLLER';
     }
 
     public function store(Request $request)
