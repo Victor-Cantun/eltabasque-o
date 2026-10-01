@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Eye, Pencil } from 'lucide-react';
 import Modal from '@/components/products/modal';
+//import { getPrice, type Product } from '@/types/product';
 
 type Branches = {
     id: number;
@@ -14,11 +15,19 @@ type Precios = {
     product_id: number;
     price_type_id: number;
     price: number | string;
-    priceType?: {
+    price_type?: {
         id: number;
         name: string;
+        slug:string;
     };
 };
+
+type PriceSlug = 'public' | 'wholesale' | 'mechanic';
+
+function getPrice(prices: Precios[], slug: PriceSlug): string {
+    const price = prices.find((item) => item.price_type?.slug === slug);
+    return price ? Number(price.price).toFixed(2) : '0.00';
+}
 
 type Product = {
     id: number;
@@ -113,7 +122,7 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
         );
     }
 
-    function getPrice(
+   /*  function getPrice(
         prices: Precios[],
         priceTypeId: number
     ): string {
@@ -124,7 +133,7 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
         return price
             ? Number(price.price).toFixed(2)
             : '0.00';
-    }
+    } */
 
     function isNewProduct(createdAt: string): boolean {
         const created = new Date(createdAt).getTime();
@@ -138,6 +147,8 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
         (b) => String(b.id) === branchId,
     )?.name;
 
+    /* if (!selectedProduct) return null;
+    const product = selectedProduct */
     return (
         <>
             <Head title="Productos" />
@@ -232,9 +243,9 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3">${getPrice(product.prices, 3)}</td>
-                                        <td className="px-4 py-3">${getPrice(product.prices, 2)}</td>
-                                        <td className="px-4 py-3">${getPrice(product.prices, 1)}</td>
+                                        <td className="px-4 py-3">${getPrice(product.prices, 'wholesale')}</td>
+                                        <td className="px-4 py-3">${getPrice(product.prices, 'mechanic')}</td>
+                                        <td className="px-4 py-3">${getPrice(product.prices, 'public')}</td>
                                         <td className="px-4 py-3">${Number(product.cost).toFixed(2)}</td>
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-3">

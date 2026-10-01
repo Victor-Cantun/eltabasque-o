@@ -5,9 +5,10 @@ type Precios = {
     product_id: number;
     price_type_id: number;
     price: number | string;
-    priceType?: {
+    price_type?: {
         id: number;
         name: string;
+        slug: string;
     };
 };
 type Product = {
@@ -23,7 +24,7 @@ type Product = {
     stock: number | null; // viene de withSum, puede ser null si no hay inventario
     created_at: string;
 };
-function getPrice(
+/* function getPrice(
     prices: Precios[],
     priceTypeId: number
 ): string {
@@ -34,7 +35,7 @@ function getPrice(
     return price
         ? Number(price.price).toFixed(2)
         : '0.00';
-}
+} */
 
 type Props = {
     selectedProduct?:Product|null;
@@ -42,7 +43,11 @@ type Props = {
     branchId:string;
     onClose:() => void;
 }
-
+type PriceSlug = 'public' | 'wholesale' | 'mechanic';
+export function getPrice(prices: Precios[], slug: PriceSlug): string {
+    const price = prices.find((item) => item.price_type?.slug === slug);
+    return price ? Number(price.price).toFixed(2) : '0.00';
+}
 export default function Modal({selectedProduct,isAdmin,branchId, onClose }:Props) {
 
     if(!selectedProduct) return null;
@@ -132,15 +137,15 @@ export default function Modal({selectedProduct,isAdmin,branchId, onClose }:Props
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio público</p>
-                                        <p className="mt-0.5 text-base font-bold text-primary">${getPrice(selectedProduct.prices, 1)}</p>
+                                        <p className="mt-0.5 text-base font-bold text-primary">${getPrice(selectedProduct.prices, 'public')}</p>
                                     </div>
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio mecánico</p>
-                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 2)}</p>
+                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 'mechanic')}</p>
                                     </div>
                                     <div className="rounded-lg border bg-muted/40 p-3">
                                         <p className="text-xs text-muted-foreground">Precio mayoreo</p>
-                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 3)}</p>
+                                        <p className="mt-0.5 text-base font-bold">${getPrice(selectedProduct.prices, 'wholesale')}</p>
                                     </div>
 
                                 </div>
