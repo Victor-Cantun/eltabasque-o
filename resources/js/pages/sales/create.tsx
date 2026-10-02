@@ -244,6 +244,15 @@ export default function Create({
         }
     };
 
+    //selector de precio publico
+    const defaultPriceTypeId = useMemo(() => {
+    return (
+        priceTypes.find((pt) => pt.slug === 'public')?.id ??
+        priceTypes[0]?.id ??
+        1
+    );
+    }, [priceTypes]);
+
     // Agregar producto al carrito
     const addToCart = (product: Product) => {
         const availableStock = getStockForBranch(product, currentBranchId);
@@ -254,8 +263,8 @@ export default function Create({
 
         setCart((prevCart) => {
             const existingIndex = prevCart.findIndex((item) => item.product_id === product.id && item.item_type === 'product');
-            const defaultPriceType = priceTypes[0]?.id ?? 1;
-
+            //const defaultPriceType = priceTypes[0]?.id ?? 1;
+            
             if (existingIndex >= 0) {
                 const currentItem = prevCart[existingIndex];
                 if (currentItem.quantity + 1 > availableStock) {
@@ -269,7 +278,8 @@ export default function Create({
                 };
                 return updated;
             } else {
-                const initialPrice = getPriceForType(product, defaultPriceType);
+                const initialPrice = getPriceForType(product, defaultPriceTypeId);
+                //const initialPrice = getPriceForType(product, defaultPriceType);
                 return [
                     ...prevCart,
                     {
@@ -277,7 +287,8 @@ export default function Create({
                         product_id: product.id,
                         product,
                         description: product.name,
-                        price_type_id: defaultPriceType,
+                        //price_type_id: defaultPriceType,
+                        price_type_id: defaultPriceTypeId,
                         quantity: 1,
                         unit_price: initialPrice,
                         discount: 0,

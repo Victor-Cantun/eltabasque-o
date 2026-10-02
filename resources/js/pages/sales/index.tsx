@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { Search, ShoppingCart, Eye, Calendar, Building2, Filter, RotateCcw, Wrench, Package, DollarSign, Users } from 'lucide-react';
+import { Search, ShoppingCart, Eye, Calendar, Building2, Filter, RotateCcw, Wrench, Package, DollarSign, Users, Landmark } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -96,10 +96,16 @@ type Props = {
     mechanics: Mechanic[];
     isAdmin?: boolean;
     summary: {
+        //total_revenue: number;
+        //total_products: number;
+        //total_services: number;
+        //completed_count: number;
         total_revenue: number;
         total_products: number;
         total_services: number;
         completed_count: number;
+        transfers_total: number;
+        transfers_count: number;
     };
     mechanicsReport: MechanicReportItem[];
     filters: {
@@ -332,7 +338,7 @@ export default function Index({
                 </div>
 
                 {/* Tarjetas resumen rápido separadas por Refacciones y Servicios */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     {/* Total Ingresos */}
                     <div className="rounded-xl border bg-card p-4 shadow-sm">
                         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
@@ -344,6 +350,19 @@ export default function Index({
                         </div>
                         <div className="mt-1 text-[11px] text-muted-foreground">
                             {summary.completed_count} ventas completadas
+                        </div>
+                    </div>
+                    {/* Transferencias */}
+                    <div className="rounded-xl border bg-card p-4 shadow-sm border-l-4 border-l-violet-500">
+                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>Transferencias</span>
+                            <Landmark className="size-4 text-violet-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold text-violet-600 dark:text-violet-400">
+                            ${Number(summary.transfers_total).toFixed(2)}
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                            {summary.transfers_count} {summary.transfers_count === 1 ? 'transferencia' : 'transferencias'}
                         </div>
                     </div>
 

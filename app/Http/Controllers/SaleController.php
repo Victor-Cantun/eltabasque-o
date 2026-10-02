@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Payment;
 
 class SaleController extends Controller
 {
@@ -85,6 +86,16 @@ class SaleController extends Controller
             ')
             ->first();
 
+        // Resumen por método de pago (solo ventas completadas, con los mismos filtros)
+        $paymentsByMethod = Payment::query()
+            ->whereIn('sale_id', (clone $baseQuery)->where('status', 'completed')->select('sales.id'))
+            ->selectRaw('method, COALESCE(SUM(amount), 0) as total, COUNT(*) as count')
+            ->groupBy('method')
+            ->get()
+            ->keyBy('method');
+
+        $transfers = $paymentsByMethod->get('transfer');            
+
         // Resumen de servicios por mecánico en el periodo filtrado
         $mechanicsReport = SaleServiceItem::query()
             ->select([
@@ -136,10 +147,16 @@ class SaleController extends Controller
             'mechanics' => $mechanics,
             'isAdmin' => $isAdmin,
             'summary' => [
+                //'total_revenue' => (float) ($completedSummary?->total_revenue ?? 0),
+                //'total_products' => (float) ($completedSummary?->total_products ?? 0),
+                //'total_services' => (float) ($completedSummary?->total_services ?? 0),
+                //'completed_count' => (int) ($completedSummary?->completed_count ?? 0),
                 'total_revenue' => (float) ($completedSummary?->total_revenue ?? 0),
                 'total_products' => (float) ($completedSummary?->total_products ?? 0),
                 'total_services' => (float) ($completedSummary?->total_services ?? 0),
                 'completed_count' => (int) ($completedSummary?->completed_count ?? 0),
+                'transfers_total' => (float) ($transfers?->total ?? 0),
+                'transfers_count' => (int) ($transfers?->count ?? 0),
             ],
             'mechanicsReport' => $mechanicsReport,
             'filters' => [
@@ -168,7 +185,7 @@ class SaleController extends Controller
 
         $priceTypes = PriceType::query()
             ->where('active', true)
-            ->orderBy('id', 'desc')
+            ->orderBy('id')
             // ->orderByRaw("FIELD(slug, 'public', 'mechanic', 'wholesale') asc")
             ->get(['id', 'name', 'slug', 'description']);
 
