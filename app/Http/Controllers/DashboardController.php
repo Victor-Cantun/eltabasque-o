@@ -182,7 +182,8 @@ class DashboardController extends Controller
     private function buildIncomeTrend(Collection $branchIds, ?string $dateFrom, ?string $dateTo)
     {
         return Sale::query()
-            ->selectRaw('DATE(created_at) as sale_date')
+            //->selectRaw('DATE(created_at) as sale_date')
+            ->selectRaw('DATE(created_at) as date')
             ->selectRaw('COALESCE(SUM(products_total), 0) as parts_income')
             ->selectRaw('COALESCE(SUM(service_total), 0) as service_income')
             ->selectRaw('COALESCE(SUM(total), 0) as total_income')
@@ -190,8 +191,10 @@ class DashboardController extends Controller
             ->whereIn('branch_id', $branchIds)
             ->when($dateFrom, fn ($q) => $q->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay()))
             ->when($dateTo, fn ($q) => $q->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay()))
-            ->groupBy('date')
-            ->orderBy('date')
+            //->groupBy('date')
+            //->orderBy('date')
+            ->groupBYRaw('DATE(created_at)')
+            ->orderByRaw('DATE(created_at)')
             ->get();
     }
 

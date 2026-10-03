@@ -14,9 +14,13 @@ const fmt = (n: number) =>
     n.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const daysAgo = (n: number) => {
+    //const d = new Date();
+    //d.setDate(d.getDate() - n);
+    //return d.toISOString().slice(0, 10);
     const d = new Date();
     d.setDate(d.getDate() - n);
-    return d.toISOString().slice(0, 10);
+    const pad = (x: number) => String(x).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;    
 };
 
 export default function IncomeTrend() {
@@ -67,8 +71,8 @@ export default function IncomeTrend() {
     }));
 
     return (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="rounded-xl border bg-card py-4 mx-4 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-2">
                 <h2 className="text-sm font-bold">Tendencia de ingresos por fecha</h2>
 
                 <div className="flex flex-wrap items-end gap-3">

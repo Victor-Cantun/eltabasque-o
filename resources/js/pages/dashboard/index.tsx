@@ -131,7 +131,8 @@ export default function Dashboard({ branches, filters }: Props) {
     return (
         <>
             <Head title="Dashboard" />
-
+            {/* Tendencia de ingresos */}
+            <IncomeTrend />
             {/* Filtros de fecha */}
             <div className="flex flex-wrap items-end gap-4 rounded-xl p-4">
                 <div>
@@ -289,8 +290,7 @@ export default function Dashboard({ branches, filters }: Props) {
                     );
                 })}
 
-                {/* Tendencia de ingresos */}
-                <IncomeTrend />
+
 
             </div>
         </>
