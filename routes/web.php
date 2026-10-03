@@ -16,10 +16,22 @@ use Illuminate\Support\Facades\Route;
 
 // Route::inertia('/', 'welcome')->name('home');
 Route::redirect('/', '/login')->name('home');
-Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+//Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
+//Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('/', 'start')->name('start');
+
+    Route::get('/', function () {
+    $user = auth()->user();
+    if ($user->hasPermission('dashboard.view')) {
+        return redirect()->route('dashboard');
+    }
+    if ($user->hasPermission('sales.view')) {
+        return redirect()->route('sales.index');
+    }
+        abort(403, 'El usuario no tiene módulos disponibles.');
+    })->middleware('auth');
+
+    //Route::inertia('/', 'start')->name('start');
     /*     Route::middleware(['permission:products.create'])->group(function ()
         {
             Route::get('products/import', [ProductImportController::class, 'create'])
@@ -31,20 +43,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     return 'ENTRÓ A PRODUCTS IMPORT';
     })->middleware(['auth', 'verified', 'permission:products.create']); */
 
-    Route::get('products/import', [ProductImportController::class, 'create'])
+    /* Route::get('products/import', [ProductImportController::class, 'create'])
         ->middleware(['auth', 'verified', 'permission:products.create'])
-        ->name('products.import');
+        ->name('products.import'); */
 
-    /*  Route::get('/', function () {
-     $user = auth()->user();
-      if ($user->hasPermission('dashboard.view')) {
-         return redirect()->route('dashboard');
-     }
-     if ($user->hasPermission('sales.view')) {
-         return redirect()->route('sales.index');
-     }
-     abort(403, 'El usuario no tiene módulos disponibles.');
-     })->middleware('auth'); */
+
 
     // Dashboard
     Route::middleware(['permission:dashboard.view'])->group(function () {
