@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Payment;
+use App\Models\SaleItem;
 
 class SaleController extends Controller
 {
@@ -82,6 +83,7 @@ class SaleController extends Controller
                 COALESCE(SUM(total), 0) as total_revenue,
                 COALESCE(SUM(products_total), 0) as total_products,
                 COALESCE(SUM(service_total), 0) as total_services,
+                COALESCE(SUM(discount),0) as total_discounts,
                 COUNT(id) as completed_count
             ')
             ->first();
@@ -94,7 +96,8 @@ class SaleController extends Controller
             ->get()
             ->keyBy('method');
 
-        $transfers = $paymentsByMethod->get('transfer');            
+        $transfers = $paymentsByMethod->get('transfer');
+        $cashs = $paymentsByMethod->get('cash');            
 
         // Resumen de servicios por mecánico en el periodo filtrado
         $mechanicsReport = SaleServiceItem::query()
@@ -141,22 +144,27 @@ class SaleController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $discountedCount = (clone $baseQuery)
+        ->where('status', 'completed')
+        ->where('discount', '>', 0)
+        ->count();    
+
         return Inertia::render('sales/index', [
             'sales' => $sales,
             'branches' => $branches,
             'mechanics' => $mechanics,
             'isAdmin' => $isAdmin,
             'summary' => [
-                //'total_revenue' => (float) ($completedSummary?->total_revenue ?? 0),
-                //'total_products' => (float) ($completedSummary?->total_products ?? 0),
-                //'total_services' => (float) ($completedSummary?->total_services ?? 0),
-                //'completed_count' => (int) ($completedSummary?->completed_count ?? 0),
                 'total_revenue' => (float) ($completedSummary?->total_revenue ?? 0),
                 'total_products' => (float) ($completedSummary?->total_products ?? 0),
                 'total_services' => (float) ($completedSummary?->total_services ?? 0),
+                'total_discounts' => (float) ($completedSummary?->total_discounts ?? 0),
+                'discounted_count' => $discountedCount,
                 'completed_count' => (int) ($completedSummary?->completed_count ?? 0),
                 'transfers_total' => (float) ($transfers?->total ?? 0),
                 'transfers_count' => (int) ($transfers?->count ?? 0),
+                'total_cash' => (float) ($cashs?->total ?? 0),
+                'cash_count' => (int) ($cashs?->count ?? 0),
             ],
             'mechanicsReport' => $mechanicsReport,
             'filters' => [
@@ -233,12 +241,19 @@ class SaleController extends Controller
 
         $products = Product::query()
             ->where('active', true)
-            ->when($query !== '', function ($q) use ($query) {
-                $q->where(function ($sub) use ($query) {
-                    $sub->where('name', 'like', "%{$query}%")
-                        ->orWhere('internal_code', 'like', "%{$query}%")
-                        ->orWhere('original_code', 'like', "%{$query}%");
-                });
+            ->when($query !== '', function ($queryBuilder) use ($query) {
+                $operator = $queryBuilder->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+                $words = preg_split('/\s+/',$query, -1, PREG_SPLIT_NO_EMPTY);
+
+                foreach ($words as $word) {
+                    $term = '%' . addcslashes($word, '%_\\') . '%';
+
+                    $queryBuilder->where(function ($q) use ($term, $operator) {
+                        $q->where('name', $operator, $term)
+                            ->orWhere('internal_code', $operator, $term)
+                            ->orWhere('original_code', $operator, $term);
+                    });
+                }
             })
             ->when($categoryId, function ($q, $categoryId) {
                 $q->where('category_id', $categoryId);
@@ -284,6 +299,22 @@ class SaleController extends Controller
         return Inertia::render('sales/show', [
             'sale' => $sale,
         ]);
+    }
+
+    public function removeItem(Request $request, Sale $sale, SaleItem $item, SaleService $saleService): RedirectResponse
+    {
+        // Ajusta esta línea a como validas permisos en tu backend
+        abort_unless($request->user()->hasPermission('sales.remove_item'), 403);
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:255'],
+        ]);
+
+        $saleService->removeItem($sale, $item, $request->user(), $data['reason']);
+
+        return redirect()
+            ->route('sales.show', $sale)
+            ->with('success', 'Producto quitado de la venta y devuelto al inventario.');
     }
 
     public function cancel(CancelSaleRequest $request, Sale $sale, SaleService $saleService): RedirectResponse

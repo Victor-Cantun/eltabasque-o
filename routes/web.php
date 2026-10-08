@@ -79,6 +79,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sales/{sale}', [SaleController::class, 'show'])
             ->name('sales.show');
     });
+    Route::delete('/sales/{sale}/items/{item}', [SaleController::class, 'removeItem'])
+    ->name('sales.items.destroy');
     Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])
         ->middleware(['permission:sales.cancel'])
         ->name('sales.cancel');
@@ -137,16 +139,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('edit', 'permission:products.edit')
         ->middlewareFor('update', 'permission:products.update')
         ->middlewareFor('destroy', 'permission:products.delete');
-    // Importar productos
-    // Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-    // Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
-
-    /*  Route::get('products/import', [ProductImportController::class, 'create'])
-         ->middleware('permission:products.import')
-         ->name('products.import');
-     Route::post('products/import', [ProductImportController::class, 'store'])
-         ->middleware('permission:products.import')
-         ->name('products.import.store'); */
     // Usuarios
     Route::resource('users', UserController::class)
         ->middlewareFor('index', 'permission:users.view')

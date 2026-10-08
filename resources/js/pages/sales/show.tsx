@@ -4,6 +4,7 @@ import { ArrowLeft, Printer, XCircle, Building2, User, Calendar, Tag, CheckCircl
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { can } from '@/lib/permissions';
+import { Trash2 } from 'lucide-react';
 
 type PriceType = {
     id: number;
@@ -86,6 +87,7 @@ type Props = {
     sale: Sale;
 };
 
+
 export default function Show({ sale }: Props) {
     const { auth } = usePage().props as any;
     const userPermissions = auth?.permissions ?? [];
@@ -104,6 +106,23 @@ export default function Show({ sale }: Props) {
             },
         });
     };
+
+const [itemToRemove, setItemToRemove] = useState<SaleItem | null>(null);
+const removeForm = useForm({ reason: '' });    
+
+const handleRemoveSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemToRemove) return;
+    removeForm.delete(`/sales/${sale.id}/items/${itemToRemove.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            setItemToRemove(null);
+            removeForm.reset();
+        },
+    });
+};
+
+const canRemoveItems = sale.status === 'completed' && can(userPermissions, 'sales.remove_item');    
 
     console.log("venta:",sale);
     return (
@@ -231,6 +250,7 @@ export default function Show({ sale }: Props) {
                     <th className="px-4 py-3 text-right">Cant.</th>
                     <th className="px-4 py-3 text-right">P. Unitario</th>
                     <th className="px-4 py-3 text-right">Subtotal</th>
+                    {canRemoveItems && <th className="px-4 py-3 print:hidden"></th>}
                 </tr>
             </thead>
             <tbody className="divide-y">
@@ -256,10 +276,22 @@ export default function Show({ sale }: Props) {
                         <td className="px-4 py-3 text-right font-bold">{Number(item.quantity)}</td>
                         <td className="px-4 py-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
                         <td className="px-4 py-3 text-right font-bold text-foreground">${Number(item.total).toFixed(2)}</td>
+                        {canRemoveItems && (
+                            <td className="px-4 py-3 text-right print:hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setItemToRemove(item)}
+                                    className="text-destructive hover:opacity-70"
+                                    title="Quitar de la venta"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            </td>
+                        )}
                     </tr>
                 ))}
                 {sale.items.length === 0 && (
-                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-xs">Sin refacciones en esta venta.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-xs">Sin refacciones en esta venta.</td></tr>
                 )}
             </tbody>
         </table>
@@ -406,6 +438,49 @@ export default function Show({ sale }: Props) {
                                         className="text-xs font-bold"
                                     >
                                         {processing ? 'Cancelando...' : 'Confirmar Cancelación'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+                {/* Quitar producto */}
+                {itemToRemove && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <div className="w-full max-w-md space-y-4 rounded-xl border bg-card p-6 shadow-xl">
+                            <div className="flex items-center gap-2 text-lg font-bold text-destructive">
+                                <AlertTriangle className="size-5" />
+                                Quitar producto de la venta
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Se devolverán <strong>{Number(itemToRemove.quantity)}</strong> pza(s) de{' '}
+                                <strong>{itemToRemove.product?.name}</strong> al inventario de{' '}
+                                <strong>{sale.branch.name}</strong> y se descontarán{' '}
+                                <strong>${Number(itemToRemove.total).toFixed(2)}</strong> del total de la venta.
+                            </p>
+                            <form onSubmit={handleRemoveSubmit} className="space-y-4">
+                                <div>
+                                    <label className="mb-1 block text-xs font-semibold">
+                                        Motivo <span className="text-destructive">*</span>
+                                    </label>
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={removeForm.data.reason}
+                                        onChange={(e) => removeForm.setData('reason', e.target.value)}
+                                        placeholder="Ej: La pieza no es compatible con el vehículo"
+                                        className="w-full rounded-md border bg-background p-2.5 text-xs"
+                                    />
+                                    {removeForm.errors.reason && (
+                                        <p className="mt-1 text-xs text-destructive">{removeForm.errors.reason}</p>
+                                    )}
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <Button type="button" variant="outline" className="text-xs" onClick={() => setItemToRemove(null)}>
+                                        Cancelar
+                                    </Button>
+                                    <Button type="submit" variant="destructive" className="text-xs font-bold" disabled={removeForm.processing}>
+                                        {removeForm.processing ? 'Quitando...' : 'Confirmar'}
                                     </Button>
                                 </div>
                             </form>

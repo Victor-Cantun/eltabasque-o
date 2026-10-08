@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { Search, ShoppingCart, Eye, Calendar, Building2, Filter, RotateCcw, Wrench, Package, DollarSign, Users, Landmark } from 'lucide-react';
+import { Search, ShoppingCart, Eye, Calendar, Building2, Filter, RotateCcw, Wrench, Package, DollarSign, Users, Landmark, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -96,16 +96,16 @@ type Props = {
     mechanics: Mechanic[];
     isAdmin?: boolean;
     summary: {
-        //total_revenue: number;
-        //total_products: number;
-        //total_services: number;
-        //completed_count: number;
         total_revenue: number;
         total_products: number;
         total_services: number;
         completed_count: number;
         transfers_total: number;
         transfers_count: number;
+        total_cash:number;
+        cash_count:number;
+        total_discounts: number;
+        discounted_count: number;
     };
     mechanicsReport: MechanicReportItem[];
     filters: {
@@ -337,10 +337,25 @@ export default function Index({
                     </Link>
                 </div>
 
-                {/* Tarjetas resumen rápido separadas por Refacciones y Servicios */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    {/* Total Ingresos */}
+                
+
+                {/* Tarjetas resumen rápido separadas por Refacciones y Servicios */} 
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Filtro Sucursal / Estado */}
                     <div className="rounded-xl border bg-card p-4 shadow-sm">
+                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>Sucursal Activa</span>
+                            <Building2 className="size-4 text-primary" />
+                        </div>
+                        <div className="mt-2 text-base font-bold truncate">
+                            {branchId ? branches.find((b) => String(b.id) === branchId)?.name : 'Todas las sucursales'}
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                            {sales.total} registros en la lista
+                        </div>
+                    </div>
+                    {/* Total Ingresos */}
+                    <div className="rounded-xl border bg-card p-4 shadow-sm border-l-4 border-l-green-500">
                         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                             <span>Ingreso Total</span>
                             <DollarSign className="size-4 text-primary" />
@@ -352,6 +367,34 @@ export default function Index({
                             {summary.completed_count} ventas completadas
                         </div>
                     </div>
+                    {/* Total Descuentos */}
+                    <div className="rounded-xl border bg-card p-4 shadow-sm border-l-4 border-l-rose-500">
+                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>Descuentos Aplicados</span>
+                            <Tag className="size-4 text-rose-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold text-rose-600 dark:text-rose-400">
+                            -${Number(summary.total_discounts).toFixed(2)}
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                            {summary.discounted_count} {summary.discounted_count === 1 ? 'venta con descuento' : 'ventas con descuento'}
+                        </div>
+                    </div>                                        
+                </div>                   
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Efectivo */}
+                    <div className="rounded-xl border bg-card p-4 shadow-sm border-l-4 border-l-violet-500">
+                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>Efectivo</span>
+                            <Landmark className="size-4 text-violet-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold text-violet-600 dark:text-violet-400">
+                            ${Number(summary.total_cash).toFixed(2)}
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                            {summary.cash_count} {summary.cash_count === 1 ? 'venta en efectivo' : 'ventas en efectivo'}
+                        </div>
+                    </div>                    
                     {/* Transferencias */}
                     <div className="rounded-xl border bg-card p-4 shadow-sm border-l-4 border-l-violet-500">
                         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
@@ -394,19 +437,7 @@ export default function Index({
                         </div>
                     </div>
 
-                    {/* Filtro Sucursal / Estado */}
-                    <div className="rounded-xl border bg-card p-4 shadow-sm">
-                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                            <span>Sucursal Activa</span>
-                            <Building2 className="size-4 text-primary" />
-                        </div>
-                        <div className="mt-2 text-base font-bold truncate">
-                            {branchId ? branches.find((b) => String(b.id) === branchId)?.name : 'Todas las sucursales'}
-                        </div>
-                        <div className="mt-1 text-[11px] text-muted-foreground">
-                            {sales.total} registros en la lista
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Reporte de Servicios por Mecánico */}
@@ -596,6 +627,7 @@ export default function Index({
                                     <th className="px-4 py-3 text-left">Cliente</th>
                                     <th className="px-4 py-3 text-right">Refacciones</th>
                                     <th className="px-4 py-3 text-right">Servicios</th>
+                                    <th className="px-4 py-3 text-right">Descuento</th>
                                     <th className="px-4 py-3 text-right">Total</th>
                                     <th className="px-4 py-3 text-center">Método de pago</th>
                                     <th className="px-4 py-3 text-center">Estado</th>
@@ -625,6 +657,13 @@ export default function Index({
                                         </td>
                                         <td className="px-4 py-3 text-right text-xs font-semibold text-amber-600">
                                             ${Number(sale.service_total ?? 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right text-xs font-semibold">
+                                            {Number(sale.discount) > 0 ? (
+                                                <span className="text-rose-600">-${Number(sale.discount).toFixed(2)}</span>
+                                            ) : (
+                                                <span className="text-muted-foreground">—</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-right font-bold text-foreground">
                                             ${Number(sale.total).toFixed(2)}
@@ -661,7 +700,7 @@ export default function Index({
 
                                 {sales.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
+                                        <td colSpan={isAdmin ? 12 : 10} className="px-4 py-12 text-center text-muted-foreground">
                                             No se encontraron ventas registradas con los criterios seleccionados.
                                         </td>
                                     </tr>

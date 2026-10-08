@@ -92,6 +92,24 @@ export default function Index({ inventories, branches, filters }: Props) {
         return `/inventory/export${qs ? `?${qs}` : ''}`;
     };
 
+    const rowClass = (row: InventoryRow) => {
+        const stock = Number(row.stock);
+
+        if (stock <= 0) {
+            return 'bg-red-300 dark:bg-red-700';
+        }
+
+        //if (stock <= 3) {
+        //    return 'bg-yellow-100 dark:bg-yellow-950/30';
+        //}
+
+        if (stock <= Number(row.minimum_stock)) {
+            return 'bg-yellow-300 dark:bg-yellow-500';
+        }
+
+        return '';
+    };
+
     return (
         <>
             <Head title="Inventario" />
@@ -176,7 +194,14 @@ export default function Index({ inventories, branches, filters }: Props) {
                         Historial de movimientos
                     </Link>
                 </div>
-
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                        <span className="h-3 w-3 rounded bg-red-700 border" /> Sin stock
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="h-3 w-3 rounded bg-yellow-500 border" /> Stock bajo
+                    </span>
+                </div>
                 <div className="overflow-x-auto rounded-xl border">
                     <table className="w-full text-sm">
                         <thead className="bg-blue-800 text-white">
@@ -192,14 +217,7 @@ export default function Index({ inventories, branches, filters }: Props) {
                         </thead>
                         <tbody>
                             {inventories.data.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className={`border-t ${
-                                        Number(row.stock) <= Number(row.minimum_stock)
-                                            ? 'bg-red-50 dark:bg-red-950/20'
-                                            : ''
-                                    }`}
-                                >
+                                <tr key={row.id} className={`border-t ${rowClass(row)}`}>
                                     <td className="p-3">{row.branch.name}</td>
                                     <td className="p-3 font-medium">{row.product.internal_code || '—'}</td>
                                     <td className="p-3 text-muted-foreground">{row.product.original_code || '—'}</td>

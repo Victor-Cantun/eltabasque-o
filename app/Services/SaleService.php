@@ -10,6 +10,9 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Models\SaleItem;
+use App\Models\SaleItemRemoval;
+
 
 class SaleService
 {
@@ -152,6 +155,110 @@ class SaleService
 
             foreach ($serviceItemsToCreate as $serviceData) {
                 $sale->serviceItems()->create($serviceData);
+            }
+
+            return $sale;
+        });
+    }
+
+    public function removeItem(Sale $sale, SaleItem $item, User $user, string $reason): Sale
+    {
+        return DB::transaction(function () use ($sale, $item, $user, $reason) {
+            // Bloqueamos la venta para evitar dos cambios simultáneos
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
+            $oldTotal = (float) $sale->total;
+            if ($sale->status !== 'completed') {
+                throw ValidationException::withMessages([
+                    'reason' => 'Solo se pueden modificar ventas completadas.',
+                ]);
+            }
+
+            if ($item->sale_id !== $sale->id) {
+                abort(404);
+            }
+
+            // Si es el único concepto, lo correcto es cancelar la venta completa
+            if ($sale->items()->count() + $sale->serviceItems()->count() <= 1) {
+                throw ValidationException::withMessages([
+                    'reason' => 'Es el único concepto de la venta. Cancela la venta completa.',
+                ]);
+            }
+
+            $removedTotal = (float) $item->total;
+
+            // 1) Regresar la pieza al inventario de la sucursal de la venta
+            if (! empty($item->product_id)) {
+                $this->inventoryService->registerMovement([
+                    'branch_id' => $sale->branch_id,
+                    'product_id' => $item->product_id,
+                    'type' => InventoryMovement::TYPE_RETURN,
+                    'quantity' => $item->quantity,
+                    'reason' => "Producto quitado de la venta Folio {$sale->folio}",
+                    'notes' => $reason,
+                    'reference_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'user_id' => $user->id,
+                ]);
+            }
+
+            // 2) Bitácora (snapshot del item antes de borrarlo)
+            SaleItemRemoval::create([
+                'sale_id' => $sale->id,
+                'product_id' => $item->product_id,
+                'removed_by' => $user->id,
+                'quantity' => $item->quantity,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->unit_price,
+                'total' => $removedTotal,
+                'reason' => $reason,
+            ]);
+
+            $item->delete();
+
+            // 3) Recalcular totales (descuento e impuesto de la venta se conservan)
+            $productsTotal = (float) $sale->items()->sum('total');
+            $serviceTotal = (float) $sale->serviceItems()->sum('total');
+            //$subtotal = $productsTotal + $serviceTotal;
+            //$newTotal = max(0, $subtotal - (float) $sale->discount + (float) $sale->tax);
+            $subtotal = $productsTotal + $serviceTotal;
+            $discount = min((float) $sale->discount, $subtotal);
+            $newTotal = max(0, $subtotal - $discount + (float) $sale->tax);
+
+            $difference = round($oldTotal - $newTotal, 2);
+
+            $newReceived = $sale->received_amount !== null
+                ? max(0, (float) $sale->received_amount - $difference)
+                : null;
+
+            
+
+            $sale->update([
+                'products_total' => $productsTotal,
+                'service_total' => $serviceTotal,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'total' => $newTotal,
+                'received_amount' => $newReceived,
+                'change_amount' => $newReceived !== null
+                    ? max(0, $newReceived - $newTotal)
+                    : $sale->change_amount,
+            ]);
+
+            // 4) Descontar la diferencia de los pagos, empezando por el más reciente
+            $remaining = $difference;
+
+            foreach ($sale->payments()->orderByDesc('id')->lockForUpdate()->get() as $payment) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $deduct = min($remaining, (float) $payment->amount);
+
+                $payment->update([
+                    'amount' => round((float) $payment->amount - $deduct, 2),
+                ]);
+
+                $remaining = round($remaining - $deduct, 2);
             }
 
             return $sale;

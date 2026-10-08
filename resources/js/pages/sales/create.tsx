@@ -107,7 +107,9 @@ export default function Create({
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-    const [globalDiscount, setGlobalDiscount] = useState<number>(0);
+    //const [globalDiscount, setGlobalDiscount] = useState<number>(0);
+    const [discountMode, setDiscountMode] = useState<'amount' | 'percent'>('amount');
+    const [discountInput, setDiscountInput] = useState('');
     const [taxRate, setTaxRate] = useState<number>(0);
 
     const [productsList, setProductsList] = useState<Product[]>(initialProducts);
@@ -403,10 +405,24 @@ export default function Create({
         .filter((item) => item.item_type === 'service')
         .reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
+    const round2 = (n: number) => Math.round(n * 100) / 100;    
+
     const subtotal = productsSubtotal + servicesSubtotal;
+    //nuevo
+    const rawDiscount = Math.max(0, parseFloat(discountInput) || 0);
+    const globalDiscount =
+    discountMode === 'percent'
+        ? round2(subtotal * (Math.min(rawDiscount, 100) / 100))
+        : round2(Math.min(rawDiscount, subtotal));
+    //nuevo
+
     const taxAmount = (subtotal - globalDiscount) * (taxRate / 100);
     const grandTotal = Math.max(0, subtotal - globalDiscount + taxAmount);
 
+
+
+    
+   
     // Cambio de sucursal
     const handleBranchSwitch = (newBranchId: number) => {
         if (cart.length > 0) {
@@ -443,6 +459,8 @@ export default function Create({
         setPaymentReference('');
         setShowPaymentModal(true);
     };
+
+
 
     // Enviar formulario de Venta confirmado con dinero recibido
     const handleConfirmSale = (e: React.FormEvent) => {
@@ -493,6 +511,7 @@ export default function Create({
                 setShowPaymentModal(false);
                 setCart([]);
                 setPaymentReference('');
+                setDiscountInput('');
             },
             onError:(errors)=>{
                 console.error('Errores al guardar la venta:',errors);
@@ -501,6 +520,8 @@ export default function Create({
             onFinish:()=>setIsSubmitting(false),
         });
     };
+
+
 
     return (
         <>
@@ -714,7 +735,8 @@ export default function Create({
                                 {cart.length > 0 && (
                                     <button
                                         type="button"
-                                        onClick={() => setCart([])}
+                                        //onClick={() => setCart([])}
+                                        onClick={() => { setCart([]); setDiscountInput(''); }}
                                         className="text-xs font-medium text-destructive hover:underline"
                                     >
                                         Vaciar carrito
@@ -895,6 +917,30 @@ export default function Create({
                                         <span>-${globalDiscount.toFixed(2)}</span>
                                     </div>
                                 )}
+                                {/*Descuento*/}
+                                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                                    <span>Descuento:</span>
+                                    <div className="flex items-center gap-1">
+                                        <select
+                                            value={discountMode}
+                                            onChange={(e) => setDiscountMode(e.target.value as 'amount' | 'percent')}
+                                            className="rounded border bg-background px-1 py-1 text-xs font-semibold text-foreground"
+                                        >
+                                            <option value="amount">$</option>
+                                            <option value="percent">%</option>
+                                        </select>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            max={discountMode === 'percent' ? 100 : subtotal}
+                                            value={discountInput}
+                                            placeholder="0"
+                                            onChange={(e) => setDiscountInput(e.target.value)}
+                                            className="w-24 rounded border bg-background px-2 py-1 text-right text-xs font-semibold text-foreground"
+                                        />
+                                    </div>
+                                </div>
                                 <div className="flex justify-between text-lg font-bold text-foreground border-t pt-2">
                                     <span>TOTAL:</span>
                                     <span className="text-primary">${grandTotal.toFixed(2)}</span>
