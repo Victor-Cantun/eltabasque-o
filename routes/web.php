@@ -14,51 +14,27 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Route::inertia('/', 'welcome')->name('home');
-Route::redirect('/', '/login')->name('home');
-Route::get('products/import', [ProductImportController::class, 'create'])->name('products.import');
-Route::post('products/import', [ProductImportController::class, 'store'])->name('products.import.store');
+
 Route::middleware(['auth', 'verified'])->group(function () {
-
     Route::get('/', function () {
-    $user = auth()->user();
-    if ($user->hasPermission('dashboard.view')) {
-        return redirect()->route('dashboard');
-    }
-    if ($user->hasPermission('sales.view')) {
-        return redirect()->route('sales.index');
-    }
+        $user = auth()->user();
+        if ($user->hasPermission('dashboard.view')) {
+            return redirect()->route('dashboard');
+        }
+        if ($user->hasPermission('sales.view')) {
+            return redirect()->route('sales.index');
+        }
         abort(403, 'El usuario no tiene módulos disponibles.');
-    })->middleware('auth');
-
-    //Route::inertia('/', 'start')->name('start');
-    /*     Route::middleware(['permission:products.create'])->group(function ()
-        {
-            Route::get('products/import', [ProductImportController::class, 'create'])
-                ->name('products.import');
-            Route::post('products/import', [ProductImportController::class, 'store'])
-                ->name('products.import.store');
-        }); */
-    /* Route::get('products/import', function () {
-    return 'ENTRÓ A PRODUCTS IMPORT';
-    })->middleware(['auth', 'verified', 'permission:products.create']); */
-
-    /* Route::get('products/import', [ProductImportController::class, 'create'])
-        ->middleware(['auth', 'verified', 'permission:products.create'])
-        ->name('products.import'); */
-
+    })->name('home');
 
 
     // Dashboard
     Route::middleware(['permission:dashboard.view'])->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])
-            // ->middleware('permission:dashboard.view')
             ->name('dashboard');
         Route::get('dashboard/data', [DashboardController::class, 'data'])
-            // ->middleware('permission:dashboard.view')
             ->name('dashboard.data');
         Route::get('dashboard/income-trend', [DashboardController::class, 'incomeTrend'])
-            // ->middleware('permission:dashboard.view')
             ->name('dashboard.income-trend');
     });
 
@@ -80,7 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('sales.show');
     });
     Route::delete('/sales/{sale}/items/{item}', [SaleController::class, 'removeItem'])
-    ->name('sales.items.destroy');
+        ->middleware('permission:sales.remove-item')
+        ->name('sales.items.destroy');
     Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])
         ->middleware(['permission:sales.cancel'])
         ->name('sales.cancel');
@@ -96,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('inventory.update');
     // Exportar productos con bajo stock
     Route::get('inventory/export', [InventoryController::class, 'export'])
+        ->middleware('permission:inventory.export')
         ->name('inventory.export');
     // Movimientos de inventario
     Route::get('/inventory-movements', [InventoryMovementController::class, 'index'])
@@ -107,8 +85,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/inventory-movements', [InventoryMovementController::class, 'store'])
         ->middleware(['permission:inventory-movements.create'])
         ->name('inventory-movements.store');
+
     // Proveedores
-    Route::resource('suppliers', SupplierController::class);
+    Route::resource('suppliers', SupplierController::class)
+        ->middlewareFor('index', 'permission:suppliers.view')
+        ->middlewareFor('create', 'permission:suppliers.create')
+        ->middlewareFor('store', 'permission:suppliers.create')
+        ->middlewareFor('show', 'permission:suppliers.view')
+        ->middlewareFor('edit', 'permission:suppliers.edit')
+        ->middlewareFor('update', 'permission:suppliers.update')
+        ->middlewareFor('destroy', 'permission:suppliers.delete');
     // Sucursales
     Route::resource('branches', BranchController::class)
         ->middlewareFor('index', 'permission:branches.view')
@@ -117,9 +103,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('edit', 'permission:branches.edit')
         ->middlewareFor('update', 'permission:branches.update')
         ->middlewareFor('destroy', 'permission:branches.delete');
+
     Route::post('branches/{branch}/toggle-active', [BranchController::class, 'toggleActive'])
         ->middleware('permission:branches.edit')
         ->name('branches.toggle-active');
+
     // Mecánicos
     Route::resource('mechanics', MechanicController::class)
         ->middlewareFor('index', 'permission:mechanics.view')
@@ -128,9 +116,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor('edit', 'permission:mechanics.edit')
         ->middlewareFor('update', 'permission:mechanics.update')
         ->middlewareFor('destroy', 'permission:mechanics.delete');
+
     Route::post('mechanics/{mechanic}/toggle-active', [MechanicController::class, 'toggleActive'])
         ->middleware('permission:mechanics.edit')
         ->name('mechanics.toggle-active');
+
+    Route::get('products/import', [ProductImportController::class, 'create'])
+        ->middleware('permission:products.import')
+        ->name('products.import');
+    Route::post('products/import', [ProductImportController::class, 'store'])
+        ->middleware('permission:products.import')
+        ->name('products.import.store');    
     // Productos
     Route::resource('products', ProductController::class)
         ->middlewareFor('index', 'permission:products.view')
@@ -170,4 +166,3 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 
-// routes/web.php
