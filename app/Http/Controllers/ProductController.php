@@ -65,7 +65,7 @@ class ProductController extends Controller
                 }
             ], 'stock')
             //version nuueva de busquea
-            ->when($search, function ($query, $search) {
+            /* ->when($search, function ($query, $search) {
                 $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
                 $words = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
 
@@ -78,7 +78,9 @@ class ProductController extends Controller
                             ->orWhere('original_code', $operator, $term);
                     });
                 }
-            })
+            }) */
+            //scrope search
+            ->search($search)
             ->when($active !== null && $active !== '', function ($query) use ($active) {
                 $query->where('active', (bool) $active);
             })

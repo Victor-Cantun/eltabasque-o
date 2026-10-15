@@ -237,11 +237,11 @@ class SaleController extends Controller
     public function searchProducts(Request $request): JsonResponse
     {
         $query = trim((string) $request->input('query', $request->input('search', '')));
-        $categoryId = $request->input('category_id');
+        //$categoryId = $request->input('category_id');
 
         $products = Product::query()
-            ->where('active', true)
-            ->when($query !== '', function ($queryBuilder) use ($query) {
+            //->where('active', true)
+            /* ->when($query !== '', function ($queryBuilder) use ($query) {
                 $operator = $queryBuilder->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
                 $words = preg_split('/\s+/',$query, -1, PREG_SPLIT_NO_EMPTY);
 
@@ -254,12 +254,14 @@ class SaleController extends Controller
                             ->orWhere('original_code', $operator, $term);
                     });
                 }
-            })
-            ->when($categoryId, function ($q, $categoryId) {
+            }) */
+            //scrope search
+            ->search($query)
+            /* ->when($categoryId, function ($q, $categoryId) {
                 $q->where('category_id', $categoryId);
-            })
+            }) */
             ->with([
-                'category:id,name',
+                //'category:id,name',
                 'prices.priceType:id,name,slug',
                 'inventories',
             ])
