@@ -19,7 +19,7 @@ export default function Create({branches,roles,}: Props) {
         <>
             <Head title="Nuevo usuario" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="rounded-xl border ">
+                <div className="rounded-xl border bg-card">
                     <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
                             <h1 className="text-2xl font-bold">

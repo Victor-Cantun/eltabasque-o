@@ -12,6 +12,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+
+
 class InventoryController extends Controller
 {
     public function __construct(
@@ -59,7 +62,7 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    private function exportData(Request $request)
     {
         $user = $request->user();
         $isAdmin = $user->roles()->where('slug', 'administrator')->exists();
@@ -83,12 +86,22 @@ class InventoryController extends Controller
             ->orderBy('stock')
             ->get();
 
+        return [
+            'inventories' => $inventories,
+            'branchId'    => $branchId,
+            'search'      => $search,
+            'minStock'    => $minStock,
+        ];
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        ['inventories' => $inventories] = $this->exportData($request);
+
         $filename = 'inventario_'.now()->format('Y-m-d_His').'.csv';
 
         return response()->streamDownload(function () use ($inventories) {
             $handle = fopen('php://output', 'w');
-
-            // BOM para que Excel abra bien los acentos
             fwrite($handle, "\xEF\xBB\xBF");
 
             fputcsv($handle, ['Sucursal', 'Producto', 'Código interno', 'Código original', 'Stock', 'Stock mínimo']);
@@ -105,10 +118,24 @@ class InventoryController extends Controller
             }
 
             fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv',
-        ]);
-    }
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }    
+
+    public function exportPdf(Request $request)
+    {
+        $data = $this->exportData($request);
+
+        $pdf = Pdf::loadView('pdf.inventory', [
+            'inventories' => $data['inventories'],
+            'search'      => $data['search'],
+            'minStock'    => $data['minStock'],
+            'branchName'  => $data['inventories']->first()?->branch?->name,
+            'generatedAt' => now(),
+            'generatedBy' => $request->user()->name,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('inventario_'.now()->format('Y-m-d_His').'.pdf');
+    }    
 
     public function edit(Inventory $inventory): Response
     {
@@ -138,13 +165,17 @@ class InventoryController extends Controller
     ) {
         return Inventory::query()
             ->with(['branch:id,name', 'product:id,name,internal_code,original_code'])
-            ->when(
+            /* ->when(
                 $request->filled('low_stock'),
                 fn ($query) => $query->whereColumn('stock', '<=', 'minimum_stock'),
-            )
-            ->when(
+            ) */
+/*             ->when(
                 $minStock !== null && $minStock !== '',
                 fn ($query) => $query->where('stock', '<=', (float) $minStock),
+            ) */
+           ->when(
+                $minStock !== null && $minStock !== '',
+                fn ($query) => $query->where('stock', '=', (float) $minStock),
             )
             ->when($search, function ($query, $search) {
                 $query->whereHas('product', function ($q) use ($search) {

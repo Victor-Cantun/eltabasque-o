@@ -59,32 +59,30 @@ export default function Edit({
     return (
         <>
             <Head title={`Editar ${product.name}`} />
-
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="rounded-xl border bg-card">
+                    <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
                             <h1 className="text-2xl font-bold">
                                 Editar producto
                             </h1>
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <p className="mt-1 text-sm text-white">
                                 {product.name}
                             </p>
                         </div>
-                        <Link href="/victors-team/products" className="rounded-md border px-4 py-2 text-sm">
+                        <Link href="/products" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
                             Volver
                         </Link>
                     </div>
-
-
-                    <ProductForm
-                        product={product}
-                        categories={categories}
-                        brands={brands}
-                        priceTypes={priceTypes}
-                        //currentTeam={currentTeam?.slug ?? ''}
-                        mode="edit"
-                    />
+                    <div className="p-6">
+                        <ProductForm
+                            product={product}
+                            categories={categories}
+                            brands={brands}
+                            priceTypes={priceTypes}
+                            mode="edit"
+                        />
+                    </div>
                 </div>
             </div>
         </>

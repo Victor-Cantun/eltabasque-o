@@ -5,8 +5,8 @@ export default function Create() {
     return (
         <>
             <Head title="Nueva sucursal" />
-            <div className="flex flex-1 flex-col gap-6 p-4">
-                <div className="rounded-xl border ">
+            <div className="flex flex-1 flex-col gap-6 p-4 mx-auto">
+                <div className="rounded-xl border bg-card">
                     {/* Encabezado */}
                     <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
@@ -22,7 +22,7 @@ export default function Create() {
                         </Link>
                     </div>
                     {/* Formulario */}
-                    <div className="p-6">
+                    <div className="max-w-3xl p-6">
                         <BranchForm mode="create"/>
                     </div>
                 </div>

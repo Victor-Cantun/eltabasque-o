@@ -30,39 +30,25 @@ export default function Edit({
             <Head title={`Editar ${role.name}`} />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
-
-                    <div className="mb-6 flex items-center justify-between">
-
+                <div className="rounded-xl border bg-card">
+                    <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
                             <h1 className="text-2xl font-bold">
                                 Editar rol
                             </h1>
-
                             <p className="mt-1 text-sm text-muted-foreground">
                                 Modifica la información y permisos
                                 del rol {role.name}.
                             </p>
                         </div>
-
-                        <Link
-                            href="/roles"
-                            className="rounded-md border px-4 py-2 text-sm"
-                        >
+                        <Link href="/roles" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
                             Volver
                         </Link>
-
                     </div>
-
-                    <RoleForm
-                        role={role}
-                        permissions={permissions}
-                        mode="edit"
-                    />
-
+                    <div className="p-6">
+                        <RoleForm role={role} permissions={permissions} mode="edit" />
+                    </div>
                 </div>
-
             </div>
         </>
     );

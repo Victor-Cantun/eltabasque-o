@@ -100,12 +100,12 @@ export default function MechanicForm({
     return (
         <form onSubmit={submit} className="space-y-6">
             {/* Encabezado informativo */}
-            <div>
+{/*             <div>
                 <h2 className="text-lg font-semibold">Información del mecánico</h2>
                 <p className="text-sm text-muted-foreground">
                     Introduce los datos personales y de contacto del mecánico.
                 </p>
-            </div>
+            </div> */}
 
             {/* Nombre */}
             <div className="space-y-2">

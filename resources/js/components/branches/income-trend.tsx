@@ -71,70 +71,73 @@ export default function IncomeTrend() {
     }));
 
     return (
-        <div className="rounded-xl border bg-card py-4 mx-4 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-2">
-                <h2 className="text-sm font-bold">Tendencia de ingresos por fecha</h2>
+        <div  className="rounded-xl border bg-card shadow-sm mx-4">
+            <h2 className="rounded-t-lg p-2 text-lg font-bold bg-blue-700 text-white">Tendencia de ingresos</h2>
+            <div className="p-2">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-2">
+                    {/* <h2 className="text-sm font-bold">Tendencia de ingresos por fecha</h2> */}
 
-                <div className="flex flex-wrap items-end gap-3">
-                    <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Desde</label>
-                        <div className="relative">
-                            <Calendar className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                max={dateTo}
-                                onChange={(e) => setDateFrom(e.target.value)}
-                                className="rounded-md border bg-background py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                            />
+                    <div className="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">Desde</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    max={dateTo}
+                                    onChange={(e) => setDateFrom(e.target.value)}
+                                    className="rounded-md border bg-background py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Hasta</label>
-                        <div className="relative">
-                            <Calendar className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                            <input
-                                type="date"
-                                value={dateTo}
-                                min={dateFrom}
-                                onChange={(e) => setDateTo(e.target.value)}
-                                className="rounded-md border bg-background py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                            />
+                        <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">Hasta</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    min={dateFrom}
+                                    onChange={(e) => setDateTo(e.target.value)}
+                                    className="rounded-md border bg-background py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {error && (
-                <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    No se pudo cargar la tendencia: {error}
-                </div>
-            )}
-
-            <div className="h-72">
-                {loading ? (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        Cargando...
+                {error && (
+                    <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        No se pudo cargar la tendencia: {error}
                     </div>
-                ) : chartData.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        Sin datos en el rango seleccionado
-                    </div>
-                ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                            <XAxis dataKey="date" fontSize={11} />
-                            <YAxis fontSize={11} tickFormatter={(v) => `$${v}`} />
-                            <Tooltip formatter={(value: number) => `$${fmt(Number(value ?? 0))}`} />
-                            <Legend />
-                            <Line type="monotone" dataKey="Total" stroke="#16a34a" strokeWidth={2} dot={false} />
-                            <Line type="monotone" dataKey="Refacciones" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                            <Line type="monotone" dataKey="Servicios" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                        </LineChart>
-                    </ResponsiveContainer>
                 )}
-            </div>
+
+                <div className="h-72">
+                    {loading ? (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                            Cargando...
+                        </div>
+                    ) : chartData.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                            Sin datos en el rango seleccionado
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis dataKey="date" fontSize={11} />
+                                <YAxis fontSize={11} tickFormatter={(v) => `$${v}`} />
+                                <Tooltip formatter={(value: number) => `$${fmt(Number(value ?? 0))}`} />
+                                <Legend />
+                                <Line type="monotone" dataKey="Total" stroke="#16a34a" strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="Refacciones" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="Servicios" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+            </div>            
         </div>
     );
 }

@@ -60,7 +60,7 @@ export default function Index({
                     </Link>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border">
+                <div className="overflow-hidden rounded-lg border bg-card">
                     <table className="w-full">
                         <thead className="border-b bg-blue-800 text-white">
                             <tr className="border-b text-left">

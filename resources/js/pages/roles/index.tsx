@@ -39,9 +39,9 @@ export default function Index({
         <>
             <Head title="Roles" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto  p-4">
 
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
+                <div className="rounded-xl  p-6 ">
 
                     {/* Encabezado */}
                     <div className="mb-6 flex items-center justify-between">
@@ -67,40 +67,19 @@ export default function Index({
                     </div>
 
                     {/* Tabla */}
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto bg-card rounded-xl">
 
                         <table className="w-full text-left text-sm">
-
                             <thead className="border-b bg-blue-800 text-white">
-
                                 <tr>
-                                    <th className="px-4 py-3">
-                                        Nombre
-                                    </th>
-
-                                    <th className="px-4 py-3">
-                                        Identificador
-                                    </th>
-
-                                    <th className="px-4 py-3">
-                                        Descripción
-                                    </th>
-
-                                    <th className="px-4 py-3 text-center">
-                                        Permisos
-                                    </th>
-
-                                    <th className="px-4 py-3 text-center">
-                                        Estado
-                                    </th>
-
-                                    <th className="px-4 py-3 text-right">
-                                        Acciones
-                                    </th>
+                                    <th className="px-4 py-3">Nombre</th>
+                                    <th className="px-4 py-3">Identificador</th>
+                                    <th className="px-4 py-3">Descripción</th>
+                                    <th className="px-4 py-3 text-center">Permisos</th>
+                                    <th className="px-4 py-3 text-center">Estado</th>
+                                    <th className="px-4 py-3 text-right">Acciones</th>
                                 </tr>
-
                             </thead>
-
                             <tbody>
 
                                 {roles.data.map(

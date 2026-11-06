@@ -19,7 +19,7 @@ export default function Create({
             <Head title="Nuevo rol" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="rounded-xl border">
+                <div className="rounded-xl border bg-card">
                     <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
                             <h1 className="text-2xl font-bold">
@@ -30,7 +30,7 @@ export default function Create({
                                 correspondientes.
                             </p>
                         </div>
-                        <Link href="/roles" className="rounded-md border px-4 py-2 text-sm" >
+                        <Link href="/roles" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted" >
                             Volver
                         </Link>
                     </div>

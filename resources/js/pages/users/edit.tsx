@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
 import UserForm from '@/components/users/user-form';
 //import users from '@/routes/users';
@@ -49,19 +49,31 @@ export default function Edit({
     return (
         <>
             <Head title="Editar usuario" />
-
-            <div className="mx-auto max-w-3xl p-6">
-                <h1 className="mb-6 text-2xl font-bold">
-                    Editar usuario
-                </h1>
-
-               <UserForm
-                    user={user}
-                    branches={branches}
-                    roles={roles}
-                    //currentTeam={currentTeam?.slug ?? ''}
-                    mode="edit"
-                />
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <div className="rounded-xl border bg-card">
+                    <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
+                        <div>
+                            <h1 className="text-2xl font-bold">
+                                Editar usuario
+                            </h1>
+                            <p className="mt-1 text-sm text-white">
+                                Editar {user.name}
+                            </p>
+                        </div>
+                        <Link href={`/users`} className="rounded-md border px-4 py-2 text-sm">
+                            Volver
+                        </Link>
+                    </div>
+                    <div className="p-6">
+                        <UserForm
+                            user={user}
+                            branches={branches}
+                            roles={roles}
+                            //currentTeam={currentTeam?.slug ?? ''}
+                            mode="edit"
+                        />
+                    </div>
+                </div>
             </div>
         </>
     );

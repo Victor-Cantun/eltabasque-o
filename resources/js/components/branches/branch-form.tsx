@@ -68,7 +68,7 @@ export default function BranchForm({
             className="space-y-6"
         >
             {/* Información general */}
-            <div>
+{/*             <div>
                 <h2 className="text-lg font-semibold">
                     Información de la sucursal
                 </h2>
@@ -76,7 +76,7 @@ export default function BranchForm({
                 <p className="text-sm text-muted-foreground">
                     Introduce los datos principales de la sucursal.
                 </p>
-            </div>
+            </div> */}
 
             {/* Nombre */}
             <div className="space-y-2">

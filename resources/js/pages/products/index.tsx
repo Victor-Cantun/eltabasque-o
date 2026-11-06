@@ -173,7 +173,7 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
                     </Link>
                 </div>
                 {/* Filtros */}
-                <div className="rounded-xl border p-4">
+                <div className="rounded-xl border p-4 bg-card">
                     <div className="grid gap-4 md:grid-cols-3">
                         <div>
                             <label className="text-sm font-medium">Sucursal</label>
@@ -211,7 +211,7 @@ export default function Index({products,branches,isAdmin,filters}: Props) {
                 </div>
 
                 {/* Tabla */}
-                <div className="overflow-hidden rounded-xl border">
+                <div className="overflow-hidden rounded-xl border bg-card">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="border-b bg-blue-800 text-white">

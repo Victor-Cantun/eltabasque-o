@@ -141,19 +141,12 @@ export default function Index({
                 </div>
 
                 {/* Buscador */}
-                <div className="rounded-xl border p-4">
-
+                <div className="rounded-xl border p-4 bg-card">
                     <div className="flex flex-col gap-2 sm:flex-row">
-
                         <div className="flex-1">
-
-                            <label
-                                htmlFor="search"
-                                className="text-sm font-medium"
-                            >
+                            <label htmlFor="search" className="text-sm font-medium">
                                 Buscar sucursal
                             </label>
-
                             <input
                                 id="search"
                                 type="text"
@@ -166,28 +159,18 @@ export default function Index({
                                 placeholder="Nombre, código, teléfono o correo..."
                                 className="mt-1 w-full rounded-md border px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                             />
-
                         </div>
 
                         <div className="flex items-end">
-
-                            <button
-                                type="button"
-                                onClick={clearSearch}
-                                disabled={!search}
-                                className="rounded-md border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                            >
+                            <button type="button" onClick={clearSearch} disabled={!search} className="rounded-md border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                                 Limpiar
                             </button>
-
                         </div>
-
                     </div>
-
                 </div>
 
                 {/* Tabla */}
-                <div className="overflow-hidden rounded-xl border">
+                <div className="overflow-hidden rounded-xl border bg-card">
 
                     <div className="overflow-x-auto">
 

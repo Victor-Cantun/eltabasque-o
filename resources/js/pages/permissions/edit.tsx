@@ -18,37 +18,25 @@ export default function Edit({
     return (
         <>
             <Head title="Editar permiso" />
-
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
-
-                    <div className="mb-6 flex items-center justify-between">
+            <div className="flex flex-1 flex-col gap-6 p-4 mx-auto">
+                <div className="rounded-xl border bg-card">
+                    <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div>
                             <h1 className="text-2xl font-bold">
                                 Editar permiso
                             </h1>
-
                             <p className="mt-1 text-sm text-muted-foreground">
                                 Modifica la información del permiso.
                             </p>
                         </div>
-
-                        <Link
-                            href="/permissions"
-                            className="rounded-md border px-4 py-2 text-sm"
-                        >
+                        <Link href="/permissions" className="rounded-md border px-4 py-2 text-sm">
                             Volver
                         </Link>
                     </div>
-
-                    <PermissionForm
-                        permission={permission}
-                        mode="edit"
-                    />
-
+                    <div className="max-w-3xl p-6">
+                        <PermissionForm permission={permission} mode="edit" />
+                    </div>
                 </div>
-
             </div>
         </>
     );

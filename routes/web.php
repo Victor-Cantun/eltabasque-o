@@ -72,9 +72,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:inventory.edit-minimum-stock')
         ->name('inventory.update');
     // Exportar productos con bajo stock
+    Route::get('inventory/export-pdf', [InventoryController::class, 'exportPdf'])
+    ->middleware('permission:inventory.export')
+    ->name('inventory.export-pdf');
     Route::get('inventory/export', [InventoryController::class, 'export'])
         ->middleware('permission:inventory.export')
         ->name('inventory.export');
+    Route::get('/inventory-movements/export-pdf', [InventoryMovementController::class, 'exportPdf'])
+        ->middleware(['permission:inventory-movements.view'])
+        ->name('inventory-movements.export-pdf');        
     // Movimientos de inventario
     Route::get('/inventory-movements', [InventoryMovementController::class, 'index'])
         ->middleware(['permission:inventory-movements.view'])

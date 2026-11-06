@@ -126,7 +126,7 @@ export default function Index({ mechanics, filters }: Props) {
                     </Link>
                 </div>
                 {/* Buscador */}
-                <div className="rounded-xl border p-4">
+                <div className="rounded-xl border p-4 bg-card">
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <div className="flex-1">
                             <label htmlFor="search" className="text-sm font-medium">
@@ -156,7 +156,7 @@ export default function Index({ mechanics, filters }: Props) {
                     </div>
                 </div>
                 {/* Tabla */}
-                <div className="overflow-hidden rounded-xl border">
+                <div className="overflow-hidden rounded-xl border bg-card">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="border-b bg-blue-800 text-white">

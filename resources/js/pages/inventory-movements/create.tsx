@@ -15,7 +15,7 @@ export default function Create({ branches, products, isAdmin, defaultBranchId }:
         <>
             <Head title="Registrar movimiento" />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="rounded-xl border ">
+                <div className="rounded-xl border bg-card">
                     <div className="mb-6 flex items-center justify-between rounded-t-lg py-2 px-6 text-lg font-bold bg-blue-700 text-white">
                         <div className="">
                             <h1 className="text-2xl font-bold">Registrar movimiento</h1>

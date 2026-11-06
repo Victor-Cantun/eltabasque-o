@@ -83,13 +83,15 @@ export default function Index({ inventories, branches, filters }: Props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search, minStock]);
 
-    const exportUrl = () => {
+    const exportUrl = (format: 'csv' | 'pdf' = 'csv') => {
         const params = new URLSearchParams();
         if (filters.branch_id) params.set('branch_id', filters.branch_id);
         if (search) params.set('search', search);
         if (minStock) params.set('min_stock', minStock);
         const qs = params.toString();
-        return `/inventory/export${qs ? `?${qs}` : ''}`;
+        //return `/inventory/export${qs ? `?${qs}` : ''}`;
+        const base = format === 'pdf' ? '/inventory/export-pdf' : '/inventory/export';
+        return `${base}${qs ? `?${qs}` : ''}`;
     };
 
     const rowClass = (row: InventoryRow) => {
@@ -124,7 +126,7 @@ export default function Index({ inventories, branches, filters }: Props) {
                     </Link>
                 </div>
 
-                <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-wrap items-end gap-3 rounded-xl border p-4 bg-card">
                     <div>
                         <label className="mb-1 block text-xs font-medium text-muted-foreground">
                             Sucursal
@@ -181,16 +183,15 @@ export default function Index({ inventories, branches, filters }: Props) {
                             className="w-32 rounded-md border px-3 py-2 text-sm"
                         />
                     </div>
-
-                    <a
-                        href={exportUrl()}
-                        className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-                    >
+                    <a href={exportUrl('pdf')} className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+                        <Download className="h-4 w-4" />
+                        Exportar PDF
+                    </a>
+                    <a href={exportUrl('csv')} className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
                         <Download className="h-4 w-4" />
                         Exportar CSV
                     </a>
-
-                    <Link href="/inventory-movements" className="rounded-md border px-4 py-2 text-sm">
+                    <Link href="/inventory-movements" className="rounded-md border px-4 py-2 text-sm hover:bg-muted">
                         Historial de movimientos
                     </Link>
                 </div>
@@ -202,59 +203,61 @@ export default function Index({ inventories, branches, filters }: Props) {
                         <span className="h-3 w-3 rounded bg-yellow-500 border" /> Stock bajo
                     </span>
                 </div>
-                <div className="overflow-x-auto rounded-xl border">
-                    <table className="w-full text-sm">
-                        <thead className="bg-blue-800 text-white">
-                            <tr>
-                                <th className="p-3 text-left">Sucursal</th>
-                                <th className="p-3 text-left">Código interno</th>
-                                <th className="p-3 text-left">Código original</th>
-                                <th className="p-3 text-left">Producto</th>
-                                <th className="p-3 text-right">Stock</th>
-                                <th className="p-3 text-right">Mínimo</th>
-                                <th className="p-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {inventories.data.map((row) => (
-                                <tr key={row.id} className={`border-t ${rowClass(row)}`}>
-                                    <td className="p-3">{row.branch.name}</td>
-                                    <td className="p-3 font-medium">{row.product.internal_code || '—'}</td>
-                                    <td className="p-3 text-muted-foreground">{row.product.original_code || '—'}</td>
-                                    <td className="p-3">{row.product.name}</td>
-                                    <td className="p-3 text-right">{row.stock}</td>
-                                    <td className="p-3 text-right">{row.minimum_stock}</td>
-                                    <td className="p-3 text-right">
-                                        <Link href={`/inventory/${row.id}/edit`} className="hover:cursor-pointer">
-                                            <Pencil className="h-4 w-4 text-blue-800" />
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                            {inventories.data.length === 0 && (
+                <div className="rounded-xl border p-4 bg-card">
+                    <div className="overflow-x-auto rounded-xl ">
+                        <table className="w-full text-sm rounded-xl">
+                            <thead className="bg-blue-800 text-white">
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                                        No se encontraron registros en el inventario.
-                                    </td>
+                                    <th className="p-3 text-left">Sucursal</th>
+                                    <th className="p-3 text-left">Código interno</th>
+                                    <th className="p-3 text-left">Código original</th>
+                                    <th className="p-3 text-left">Producto</th>
+                                    <th className="p-3 text-right">Stock</th>
+                                    <th className="p-3 text-right">Mínimo</th>
+                                    <th className="p-3"></th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {inventories.links && inventories.links.length > 3 && (
-                    <div className="flex flex-wrap gap-1">
-                        {inventories.links.map((link, index) => (
-                            <button
-                                key={index}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                className={`rounded border px-3 py-1 text-sm ${link.active ? 'bg-primary text-primary-foreground' : ''}`}
-                            />
-                        ))}
+                            </thead>
+                            <tbody>
+                                {inventories.data.map((row) => (
+                                    <tr key={row.id} className={`border-t ${rowClass(row)}`}>
+                                        <td className="p-3">{row.branch.name}</td>
+                                        <td className="p-3 font-medium">{row.product.internal_code || '—'}</td>
+                                        <td className="p-3 text-muted-foreground">{row.product.original_code || '—'}</td>
+                                        <td className="p-3">{row.product.name}</td>
+                                        <td className="p-3 text-right">{row.stock}</td>
+                                        <td className="p-3 text-right">{row.minimum_stock}</td>
+                                        <td className="p-3 text-right">
+                                            <Link href={`/inventory/${row.id}/edit`} className="hover:cursor-pointer">
+                                                <Pencil className="h-4 w-4 text-blue-800" />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {inventories.data.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                                            No se encontraron registros en el inventario.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                )}
+
+                    {inventories.links && inventories.links.length > 3 && (
+                        <div className="flex flex-wrap gap-1">
+                            {inventories.links.map((link, index) => (
+                                <button
+                                    key={index}
+                                    disabled={!link.url}
+                                    onClick={() => link.url && router.get(link.url)}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    className={`rounded border px-3 py-1 text-sm ${link.active ? 'bg-primary text-primary-foreground' : ''}`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </>
     );

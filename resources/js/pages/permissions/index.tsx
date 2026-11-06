@@ -30,7 +30,7 @@ export default function Index({
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
 
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
+                <div className="rounded-xl p-6">
 
                     <div className="mb-6 flex items-center justify-between">
                         <div>
@@ -51,7 +51,7 @@ export default function Index({
                         </Link>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto bg-card rounded-md">
                         <table className="w-full">
                             <thead className="border-b bg-blue-800 text-white">
                                 <tr className="border-b text-left text-sm ">
