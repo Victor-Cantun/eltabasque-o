@@ -35,6 +35,32 @@ type Props = {
     users: { id: number; name: string }[];
     isAdmin: boolean;
     totals: { cost: number; price: number };
+    adjustments: {
+        negative: number;
+        positive: number;
+        net: number;
+        negative_count: number;
+        positive_count: number;
+    };    
+};
+
+const HIGHLIGHT_TYPES = ['adjustment'];
+
+const delta = (m: Movement) => Number(m.stock_after) - Number(m.stock_before);
+
+const rowTone = (m: Movement) => {
+    if (!HIGHLIGHT_TYPES.includes(m.type)) return '';
+    const d = delta(m);
+    if (d < 0) return 'bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50';
+    if (d > 0) return 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50';
+    return '';
+};
+
+const stockTone = (m: Movement) => {
+    if (!HIGHLIGHT_TYPES.includes(m.type)) return '';
+    const d = delta(m);
+    return d < 0 ? 'font-semibold text-red-600 dark:text-red-400'
+         : d > 0 ? 'font-semibold text-green-600 dark:text-green-400' : '';
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -50,7 +76,7 @@ const TYPE_LABELS: Record<string, string> = {
 const money = (v: number | string | null) =>
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(v ?? 0));
 
-export default function Index({ movements, filters, branches, users, isAdmin, totals }: Props) {
+export default function Index({ movements, filters, branches, users, isAdmin, totals, adjustments }: Props) {
     const [form, setForm] = useState({
         date_from: filters.date_from ?? '',
         date_to: filters.date_to ?? '',
@@ -88,12 +114,12 @@ export default function Index({ movements, filters, branches, users, isAdmin, to
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Movimientos de inventario</h1>
-                    <Link
+{/*                     <Link
                         href="/inventory-movements/create"
                         className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
                     >
                         Nuevo movimiento
-                    </Link>
+                    </Link> */}
                 </div>
                 <div className="flex items-center gap-2">
                     <a
@@ -174,6 +200,50 @@ export default function Index({ movements, filters, branches, users, isAdmin, to
                         <div className="text-xl font-semibold">{money(totals.price)}</div>
                     </div>
                 </div>
+                {/* Balance de ajustes (auditoría) */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+                        <div className="text-xs text-red-700 dark:text-red-300">
+                            Ajustes negativos ({adjustments.negative_count})
+                        </div>
+                        <div className="text-xl font-semibold text-red-700 dark:text-red-300">
+                            − {money(adjustments.negative)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Inventario descontado al costo</div>
+                    </div>
+
+                    <div className="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
+                        <div className="text-xs text-green-700 dark:text-green-300">
+                            Ajustes positivos ({adjustments.positive_count})
+                        </div>
+                        <div className="text-xl font-semibold text-green-700 dark:text-green-300">
+                            + {money(adjustments.positive)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Inventario agregado al costo</div>
+                    </div>
+
+                    <div
+                        className={`rounded-xl border p-4 ${
+                            adjustments.net < 0
+                                ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30'
+                                : adjustments.net > 0
+                                ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                                : 'bg-card'
+                        }`}
+                    >
+                        <div className="text-xs text-muted-foreground">Balance neto de ajustes</div>
+                        <div
+                            className={`text-xl font-semibold ${
+                                adjustments.net < 0 ? 'text-red-700 dark:text-red-300'
+                                : adjustments.net > 0 ? 'text-green-700 dark:text-green-300' : ''
+                            }`}
+                        >
+                            {adjustments.net > 0 ? '+ ' : adjustments.net < 0 ? '− ' : ''}
+                            {money(Math.abs(adjustments.net))}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Positivos − negativos</div>
+                    </div>
+                </div>                
 
                 <div className="overflow-x-auto rounded-xl border bg-card">
                     <table className="w-full text-sm">
@@ -193,7 +263,7 @@ export default function Index({ movements, filters, branches, users, isAdmin, to
                         </thead>
                         <tbody>
                             {movements.data.map((m) => (
-                                <tr key={m.id} className="border-t">
+                                <tr key={m.id} className={`border-t ${rowTone(m)}`}>
                                     <td className="p-3">{new Date(m.created_at).toLocaleString()}</td>
                                     <td className="p-3">{m.branch.name}</td>
                                     <td className="p-3">
@@ -202,7 +272,7 @@ export default function Index({ movements, filters, branches, users, isAdmin, to
                                     </td>
                                     <td className="p-3">{TYPE_LABELS[m.type] ?? m.type}</td>
                                     <td className="p-3 text-right">{m.quantity}</td>
-                                    <td className="p-3 text-right">{m.stock_before} → {m.stock_after}</td>
+                                    <td  className={`p-3 text-right ${stockTone(m)}`}>{m.stock_before} → {m.stock_after}</td>
                                     <td className="p-3 text-right">{money(Number(m.moved_units) * Number(m.unit_cost ?? 0))}</td>
                                     <td className="p-3 text-right">{money(Number(m.moved_units) * Number(m.unit_price ?? 0))}</td>
                                     <td className="p-3">{m.reason ?? '—'}</td>

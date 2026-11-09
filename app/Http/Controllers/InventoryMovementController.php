@@ -23,6 +23,32 @@ class InventoryMovementController extends Controller
         protected InventoryService $inventoryService,
     ) {}
 
+    private const ADJUSTMENT_TYPES = ['adjustment'];
+
+    private function adjustmentTotalsFor(Builder $base): array
+    {
+        $delta = '(inventory_movements.stock_after - inventory_movements.stock_before)';
+
+        $t = (clone $base)
+            ->whereIn('inventory_movements.type', self::ADJUSTMENT_TYPES)
+            ->selectRaw("COALESCE(SUM(CASE WHEN $delta < 0 THEN ABS($delta) * products.cost ELSE 0 END), 0) as negative_cost")
+            ->selectRaw("COALESCE(SUM(CASE WHEN $delta > 0 THEN $delta * products.cost ELSE 0 END), 0) as positive_cost")
+            ->selectRaw("COALESCE(SUM(CASE WHEN $delta < 0 THEN 1 ELSE 0 END), 0) as negative_count")
+            ->selectRaw("COALESCE(SUM(CASE WHEN $delta > 0 THEN 1 ELSE 0 END), 0) as positive_count")
+            ->first();
+
+        $negative = (float) $t->negative_cost;
+        $positive = (float) $t->positive_cost;
+
+        return [
+            'negative'       => $negative,
+            'positive'       => $positive,
+            'net'            => $positive - $negative,
+            'negative_count' => (int) $t->negative_count,
+            'positive_count' => (int) $t->positive_count,
+        ];
+    }
+
     public function index(Request $request): Response
     {
         ['filters' => $filters, 'isAdmin' => $isAdmin, 'branchIds' => $userBranchIds] = $this->resolveScope($request);
@@ -36,7 +62,7 @@ class InventoryMovementController extends Controller
             ->withQueryString();
 
         $totals = $this->totalsFor($base);
-
+        $adjustments = $this->adjustmentTotalsFor($base);
         $branches = $isAdmin
             ? Branch::query()->select('id', 'name')->orderBy('name')->get()
             : Branch::query()->whereIn('id', $userBranchIds)->select('id', 'name')->orderBy('name')->get();
@@ -54,6 +80,7 @@ class InventoryMovementController extends Controller
             'users'     => $users,
             'isAdmin'   => $isAdmin,
             'totals'    => $totals,
+            'adjustments' => $adjustments,
         ]);
     }
 
@@ -75,6 +102,8 @@ class InventoryMovementController extends Controller
         $pdf = Pdf::loadView('pdf.inventory-movements', [
             'movements'   => $movements,
             'totals'      => $this->totalsFor($base),
+            'adjustments'    => $this->adjustmentTotalsFor($base),   // <- nuevo
+            'highlightTypes' => self::ADJUSTMENT_TYPES,              // <- nuevo
             'filters'     => $filters,
             'typeLabel'   => self::TYPE_LABELS[$filters['type']] ?? null,
             'branchName'  => $filters['branch_id'] ? Branch::find($filters['branch_id'])?->name : null,
