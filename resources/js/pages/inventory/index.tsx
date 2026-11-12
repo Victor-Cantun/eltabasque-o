@@ -26,6 +26,7 @@ type Props = {
     inventories: {
         data: InventoryRow[];
         links?: PaginationLink[];
+        total: number;
     };
     branches: { id: number; name: string }[];
     isAdmin?: boolean;
@@ -194,6 +195,19 @@ export default function Index({ inventories, branches, filters }: Props) {
                     <Link href="/inventory-movements" className="rounded-md border px-4 py-2 text-sm hover:bg-muted">
                         Historial de movimientos
                     </Link>
+                </div>
+                <div className="w-fit rounded-xl border bg-card px-5 py-3">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        Productos encontrados
+                    </p>
+                    <p className="text-3xl font-bold">
+                        {inventories.total.toLocaleString('es-MX')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {filters.min_stock !== undefined && filters.min_stock !== ''
+                            ? `con stock = ${filters.min_stock}`
+                            : 'según los filtros actuales'}
+                    </p>
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">

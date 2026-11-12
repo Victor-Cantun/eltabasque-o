@@ -123,6 +123,9 @@ class InventoryController extends Controller
 
     public function exportPdf(Request $request)
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
+
         $data = $this->exportData($request);
 
         $pdf = Pdf::loadView('pdf.inventory', [
@@ -164,6 +167,7 @@ class InventoryController extends Controller
         ?string $minStock,
     ) {
         return Inventory::query()
+            ->select(['id', 'branch_id', 'product_id', 'stock', 'minimum_stock'])
             ->with(['branch:id,name', 'product:id,name,internal_code,original_code'])
             /* ->when(
                 $request->filled('low_stock'),
